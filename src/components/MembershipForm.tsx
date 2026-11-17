@@ -107,35 +107,35 @@ export const MembershipForm: React.FC = () => {
   if (isSubmitted) {
     return (
       <div className="text-center py-12 px-4 space-y-6">
-        <div className="w-14 h-14 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+        <div className="w-14 h-14 rounded-full border border-[#38BDF8]/40 bg-[#2563EB]/15 text-[#38BDF8] flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(56,189,248,0.25)]">
           <CheckCircle2 size={30} />
         </div>
 
         <div className="space-y-2">
-          <p className="text-[11px] font-mono tracking-widest uppercase text-emerald-400">
+          <p className="text-[11px] font-mono tracking-widest uppercase text-[#38BDF8]">
             APPLICATION_RECEIVED // STATUS: VALIDATED
           </p>
-          <h3 className="text-xl sm:text-2xl font-light tracking-wide text-white">
-            Welcome, <span className="font-semibold text-cyan-300">{formData.fullName}</span>!
+          <h3 className="text-xl sm:text-2xl font-light tracking-wide text-[#DCE6F5]">
+            Welcome, <span className="font-semibold text-[#38BDF8]">{formData.fullName}</span>!
           </h3>
-          <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
-            Your application has been logged. Our student developer corps will contact you via your university email address (<span className="text-cyan-300">{formData.email}</span>).
+          <p className="text-xs sm:text-sm text-[#9FB0C8] max-w-md mx-auto leading-relaxed">
+            Your application has been logged. Our student developer corps will contact you via your university email address (<span className="text-[#38BDF8]">{formData.email}</span>).
           </p>
         </div>
 
         {/* Details Summary */}
-        <div className="bg-black/40 rounded-xl p-5 border border-white/10 text-left text-xs space-y-2 max-w-md mx-auto font-mono">
+        <div className="bg-[#080D18]/90 rounded-2xl p-5 border border-[#243650] text-left text-xs space-y-2 max-w-md mx-auto font-mono">
           <div className="flex justify-between">
-            <span className="text-slate-500">Student ID:</span>
-            <span className="text-slate-200">{formData.studentId}</span>
+            <span className="text-[#9FB0C8]">Student ID:</span>
+            <span className="text-[#DCE6F5]">{formData.studentId}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Department:</span>
-            <span className="text-slate-200 truncate max-w-[220px]">{formData.schoolDepartment}</span>
+            <span className="text-[#9FB0C8]">Department:</span>
+            <span className="text-[#DCE6F5] truncate max-w-[220px]">{formData.schoolDepartment}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Semester:</span>
-            <span className="text-cyan-400">{formData.semester}</span>
+            <span className="text-[#9FB0C8]">Semester:</span>
+            <span className="text-[#38BDF8]">{formData.semester}</span>
           </div>
         </div>
 
@@ -143,7 +143,7 @@ export const MembershipForm: React.FC = () => {
           <button
             type="button"
             onClick={handleReset}
-            className="border border-white/20 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/40 text-white px-7 py-3 text-xs font-mono uppercase tracking-widest transition-all rounded-sm"
+            className="btn-secondary text-xs uppercase tracking-widest"
           >
             SUBMIT ANOTHER APPLICATION
           </button>
@@ -157,8 +157,8 @@ export const MembershipForm: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
         {/* 1. FULL NAME */}
         <div className="space-y-1">
-          <label className="block text-[11px] font-mono tracking-widest text-slate-300 uppercase font-semibold">
-            FULL NAME <span className="text-red-500">*</span>
+          <label className="block text-[11px] font-mono tracking-widest text-[#DCE6F5] uppercase font-semibold">
+            FULL NAME <span className="text-[#38BDF8]">*</span>
           </label>
           <input
             type="text"
@@ -166,14 +166,14 @@ export const MembershipForm: React.FC = () => {
             value={formData.fullName}
             onChange={handleChange}
             placeholder="e.g. Aarav Sharma"
-            className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-white placeholder:text-slate-600 focus:outline-none transition-colors ${
+            className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-[#DCE6F5] placeholder:text-[#9FB0C8]/40 focus:outline-none transition-colors ${
               errors.fullName
-                ? 'border-red-500 focus:border-red-400'
-                : 'border-white/20 focus:border-white'
+                ? 'border-[#f87171] focus:border-[#ef4444]'
+                : 'border-[#243650] focus:border-[#38BDF8]'
             }`}
           />
           {errors.fullName && (
-            <p className="text-[10px] text-red-400 font-mono mt-1 flex items-center gap-1">
+            <p className="text-[10px] text-[#f87171] font-mono mt-1 flex items-center gap-1">
               <AlertCircle size={10} /> {errors.fullName}
             </p>
           )}
@@ -181,8 +181,8 @@ export const MembershipForm: React.FC = () => {
 
         {/* 2. UNIVERSITY EMAIL */}
         <div className="space-y-1">
-          <label className="block text-[11px] font-mono tracking-widest text-slate-300 uppercase font-semibold">
-            UNIVERSITY EMAIL <span className="text-red-500">*</span>
+          <label className="block text-[11px] font-mono tracking-widest text-[#DCE6F5] uppercase font-semibold">
+            UNIVERSITY EMAIL <span className="text-[#38BDF8]">*</span>
           </label>
           <input
             type="email"
@@ -190,14 +190,14 @@ export const MembershipForm: React.FC = () => {
             value={formData.email}
             onChange={handleChange}
             placeholder="student@sgsu.edu.in"
-            className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-white placeholder:text-slate-600 focus:outline-none transition-colors ${
+            className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-[#DCE6F5] placeholder:text-[#9FB0C8]/40 focus:outline-none transition-colors ${
               errors.email
-                ? 'border-red-500 focus:border-red-400'
-                : 'border-white/20 focus:border-white'
+                ? 'border-[#f87171] focus:border-[#ef4444]'
+                : 'border-[#243650] focus:border-[#38BDF8]'
             }`}
           />
           {errors.email && (
-            <p className="text-[10px] text-red-400 font-mono mt-1 flex items-center gap-1">
+            <p className="text-[10px] text-[#f87171] font-mono mt-1 flex items-center gap-1">
               <AlertCircle size={10} /> {errors.email}
             </p>
           )}
@@ -205,8 +205,8 @@ export const MembershipForm: React.FC = () => {
 
         {/* 3. STUDENT ID / ENROLLMENT NUMBER */}
         <div className="space-y-1">
-          <label className="block text-[11px] font-mono tracking-widest text-slate-300 uppercase font-semibold">
-            STUDENT ID / ENROLLMENT NUMBER <span className="text-red-500">*</span>
+          <label className="block text-[11px] font-mono tracking-widest text-[#DCE6F5] uppercase font-semibold">
+            STUDENT ID / ENROLLMENT NUMBER <span className="text-[#38BDF8]">*</span>
           </label>
           <input
             type="text"
@@ -214,14 +214,14 @@ export const MembershipForm: React.FC = () => {
             value={formData.studentId}
             onChange={handleChange}
             placeholder="e.g. SGSU-2024-CSE-042"
-            className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-white placeholder:text-slate-600 focus:outline-none transition-colors ${
+            className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-[#DCE6F5] placeholder:text-[#9FB0C8]/40 focus:outline-none transition-colors ${
               errors.studentId
-                ? 'border-red-500 focus:border-red-400'
-                : 'border-white/20 focus:border-white'
+                ? 'border-[#f87171] focus:border-[#ef4444]'
+                : 'border-[#243650] focus:border-[#38BDF8]'
             }`}
           />
           {errors.studentId && (
-            <p className="text-[10px] text-red-400 font-mono mt-1 flex items-center gap-1">
+            <p className="text-[10px] text-[#f87171] font-mono mt-1 flex items-center gap-1">
               <AlertCircle size={10} /> {errors.studentId}
             </p>
           )}
@@ -229,8 +229,8 @@ export const MembershipForm: React.FC = () => {
 
         {/* 4. SCHOOL / DEPARTMENT */}
         <div className="space-y-1">
-          <label className="block text-[11px] font-mono tracking-widest text-slate-300 uppercase font-semibold">
-            SCHOOL / DEPARTMENT <span className="text-red-500">*</span>
+          <label className="block text-[11px] font-mono tracking-widest text-[#DCE6F5] uppercase font-semibold">
+            SCHOOL / DEPARTMENT <span className="text-[#38BDF8]">*</span>
           </label>
           <input
             type="text"
@@ -238,14 +238,14 @@ export const MembershipForm: React.FC = () => {
             value={formData.schoolDepartment}
             onChange={handleChange}
             placeholder="e.g. School of Future Skills & IT"
-            className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-white placeholder:text-slate-600 focus:outline-none transition-colors ${
+            className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-[#DCE6F5] placeholder:text-[#9FB0C8]/40 focus:outline-none transition-colors ${
               errors.schoolDepartment
-                ? 'border-red-500 focus:border-red-400'
-                : 'border-white/20 focus:border-white'
+                ? 'border-[#f87171] focus:border-[#ef4444]'
+                : 'border-[#243650] focus:border-[#38BDF8]'
             }`}
           />
           {errors.schoolDepartment && (
-            <p className="text-[10px] text-red-400 font-mono mt-1 flex items-center gap-1">
+            <p className="text-[10px] text-[#f87171] font-mono mt-1 flex items-center gap-1">
               <AlertCircle size={10} /> {errors.schoolDepartment}
             </p>
           )}
@@ -253,8 +253,8 @@ export const MembershipForm: React.FC = () => {
 
         {/* 5. CURRENT SEMESTER */}
         <div className="space-y-1 sm:col-span-2">
-          <label className="block text-[11px] font-mono tracking-widest text-slate-300 uppercase font-semibold">
-            CURRENT SEMESTER <span className="text-red-500">*</span>
+          <label className="block text-[11px] font-mono tracking-widest text-[#DCE6F5] uppercase font-semibold">
+            CURRENT SEMESTER <span className="text-[#38BDF8]">*</span>
           </label>
           <input
             type="text"
@@ -262,14 +262,14 @@ export const MembershipForm: React.FC = () => {
             value={formData.semester}
             onChange={handleChange}
             placeholder="e.g. Semester 3 / 2nd Year"
-            className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-white placeholder:text-slate-600 focus:outline-none transition-colors ${
+            className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-[#DCE6F5] placeholder:text-[#9FB0C8]/40 focus:outline-none transition-colors ${
               errors.semester
-                ? 'border-red-500 focus:border-red-400'
-                : 'border-white/20 focus:border-white'
+                ? 'border-[#f87171] focus:border-[#ef4444]'
+                : 'border-[#243650] focus:border-[#38BDF8]'
             }`}
           />
           {errors.semester && (
-            <p className="text-[10px] text-red-400 font-mono mt-1 flex items-center gap-1">
+            <p className="text-[10px] text-[#f87171] font-mono mt-1 flex items-center gap-1">
               <AlertCircle size={10} /> {errors.semester}
             </p>
           )}
@@ -278,8 +278,8 @@ export const MembershipForm: React.FC = () => {
 
       {/* 6. WHY DO YOU WANT TO JOIN BINARY BATTLE CLUB? */}
       <div className="space-y-1 pt-2">
-        <label className="block text-[11px] font-mono tracking-widest text-slate-300 uppercase font-semibold">
-          WHY DO YOU WANT TO JOIN BINARY BATTLE CLUB? <span className="text-red-500">*</span>
+        <label className="block text-[11px] font-mono tracking-widest text-[#DCE6F5] uppercase font-semibold">
+          WHY DO YOU WANT TO JOIN BINARY BATTLE CLUB? <span className="text-[#38BDF8]">*</span>
         </label>
         <textarea
           name="reasonToJoin"
@@ -287,14 +287,14 @@ export const MembershipForm: React.FC = () => {
           value={formData.reasonToJoin}
           onChange={handleChange}
           placeholder="Describe your motivation, skills you'd love to develop, and how you want to contribute to the community..."
-          className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-white placeholder:text-slate-600 focus:outline-none transition-colors resize-none ${
+          className={`w-full bg-transparent border-0 border-b pb-2 pt-1 text-sm text-[#DCE6F5] placeholder:text-[#9FB0C8]/40 focus:outline-none transition-colors resize-none ${
             errors.reasonToJoin
-              ? 'border-red-500 focus:border-red-400'
-              : 'border-white/20 focus:border-white'
+              ? 'border-[#f87171] focus:border-[#ef4444]'
+              : 'border-[#243650] focus:border-[#38BDF8]'
           }`}
         />
         {errors.reasonToJoin && (
-          <p className="text-[10px] text-red-400 font-mono mt-1 flex items-center gap-1">
+          <p className="text-[10px] text-[#f87171] font-mono mt-1 flex items-center gap-1">
             <AlertCircle size={10} /> {errors.reasonToJoin}
           </p>
         )}
@@ -305,11 +305,11 @@ export const MembershipForm: React.FC = () => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="border border-white/25 bg-white/[0.04] hover:bg-white/[0.1] hover:border-white/50 text-white px-8 py-3 text-xs font-mono uppercase tracking-widest transition-all rounded-sm flex items-center gap-2 disabled:opacity-50"
+          className="btn-primary text-xs uppercase tracking-widest px-8 py-3 disabled:opacity-50"
         >
           {isSubmitting ? (
             <>
-              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-[#38BDF8] rounded-full animate-spin" />
               <span>VALIDATING_DATA...</span>
             </>
           ) : (

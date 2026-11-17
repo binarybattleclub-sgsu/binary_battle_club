@@ -33,7 +33,7 @@ export const AppContent: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
   return (
-    <div className="min-h-screen bg-[#05060A] text-slate-200 flex flex-col font-sans selection:bg-rose-500 selection:text-white">
+    <div className="min-h-screen bg-[#080D18] text-[#DCE6F5] flex flex-col font-sans selection:bg-[#2563EB] selection:text-[#DCE6F5] relative">
       <ScrollToTop />
 
       {/* Fixed Left Sidebar */}

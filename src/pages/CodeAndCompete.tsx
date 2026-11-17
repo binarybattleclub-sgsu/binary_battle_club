@@ -1,46 +1,47 @@
 import React, { useState } from 'react';
-import { CodeXml, GraduationCap } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 import {
   FRIDAY_SESSIONS_DATA,
   RNTU_TRAININGS_DATA,
 } from '../data/technologyUpdates';
 import { EventModal, ModalData } from '../components/EventModal';
+import { YouTubeLearningSection } from '../components/youtube/YouTubeLearningSection';
 
 export const CodeAndCompete: React.FC = () => {
   const [modalData, setModalData] = useState<ModalData | null>(null);
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-16 text-[#DCE6F5]">
       {/* Top Section Header */}
-      <div className="bg-[#0a0f1e]/85 backdrop-blur-xl rounded-3xl p-8 sm:p-10 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+      <div className="bg-[#101D35]/85 backdrop-blur-xl rounded-3xl p-8 sm:p-10 border border-[#243650] shadow-[0_12px_35px_rgba(8,13,24,0.8)]">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-purple-500/10 text-purple-300 border border-purple-500/30 mb-3 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-[#2563EB]/15 text-[#38BDF8] border border-[#2563EB]/30 mb-3 shadow-[0_0_15px_rgba(37,99,235,0.15)]">
             <GraduationCap size={14} />
             <span>LEARN & UPSKILL // SGSU</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2.5">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#DCE6F5] tracking-tight mb-2.5">
             Learn & Upskill
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
-            "Learn together, experiment with technology and challenge yourself through hands-on workshops and competitions."
+          <p className="text-xs sm:text-sm text-[#9FB0C8] leading-relaxed font-normal">
+            &ldquo;Learn together, experiment with technology and challenge yourself through hands-on workshops and competitions.&rdquo;
           </p>
         </div>
       </div>
 
       {/* 1. Friday Learning Sessions */}
       <section className="space-y-6">
-        <div className="bg-gradient-to-r from-indigo-950 via-[#0a0f1e] to-purple-950 text-white rounded-3xl p-8 sm:p-10 border border-white/10 shadow-xl relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#101D35] via-[#13223d] to-[#101D35] text-[#DCE6F5] rounded-3xl p-8 sm:p-10 border border-[#243650] shadow-xl relative overflow-hidden">
           <div className="max-w-3xl">
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-[#2563EB]/15 text-[#38BDF8] border border-[#2563EB]/30">
               WEEKLY_PRACTICE // LABORATORY
             </span>
             <h2 className="text-xl sm:text-2xl font-bold mt-3 mb-2 tracking-tight">
               Friday – Learn, Explore & Experiment
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
-              "Weekly student-driven workshops and practical learning sessions conducted every Friday."
+            <p className="text-xs sm:text-sm text-[#9FB0C8] leading-relaxed font-normal">
+              &ldquo;Weekly student-driven workshops and practical learning sessions conducted every Friday.&rdquo;
             </p>
-            <p className="mt-2 text-xs text-cyan-300/80 font-mono">
+            <p className="mt-2 text-xs text-[#38BDF8] font-mono">
               Dedicated to hands-on coding, live debugging, and global certification integration across semesters.
             </p>
           </div>
@@ -74,7 +75,7 @@ export const CodeAndCompete: React.FC = () => {
                       : [session.image],
                 })
               }
-              className="bg-[#0a0f1e]/85 backdrop-blur-xl rounded-3xl border border-white/10 shadow-lg hover:border-indigo-500/40 hover:shadow-[0_0_35px_rgba(99,102,241,0.3)] transition-all overflow-hidden group cursor-pointer p-3 sm:p-4 flex flex-col items-center justify-center"
+              className="bg-[#101D35]/85 backdrop-blur-xl rounded-3xl border border-[#243650] shadow-lg hover:border-[#38BDF8]/40 hover:bg-[#172945]/90 hover:shadow-[0_12px_35px_rgba(8,13,24,0.8),0_0_20px_rgba(37,99,235,0.18)] transition-all overflow-hidden group cursor-pointer p-3 sm:p-4 flex flex-col items-center justify-center"
             >
               <img
                 src={session.image}
@@ -86,17 +87,20 @@ export const CodeAndCompete: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. RNTU Training Sessions */}
+      {/* 2. YouTube Learning Library */}
+      <YouTubeLearningSection />
+
+      {/* 3. RNTU Training Sessions */}
       <section className="space-y-6">
-        <div className="bg-gradient-to-r from-indigo-950 via-[#0a0f1e] to-purple-950 text-white rounded-3xl p-8 sm:p-10 border border-white/10 shadow-xl relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#101D35] via-[#13223d] to-[#101D35] text-[#DCE6F5] rounded-3xl p-8 sm:p-10 border border-[#243650] shadow-xl relative overflow-hidden">
           <div className="max-w-3xl">
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-[#2563EB]/15 text-[#38BDF8] border border-[#2563EB]/30">
               CAMPUS_OUTREACH // RNTU_PARTNERSHIP
             </span>
             <h2 className="text-xl sm:text-2xl font-bold mt-3 mb-2 tracking-tight">
               Binary Battle Club – Trainings RNTU
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm text-[#9FB0C8] leading-relaxed font-normal">
               Global Certification Integration all Semester
             </p>
           </div>
@@ -122,7 +126,7 @@ export const CodeAndCompete: React.FC = () => {
                   gallery: [item.image],
                 })
               }
-              className="bg-[#0a0f1e]/85 backdrop-blur-xl rounded-3xl border border-white/10 shadow-lg hover:border-cyan-500/40 hover:shadow-[0_0_35px_rgba(0,242,254,0.25)] transition-all overflow-hidden group cursor-pointer p-3 sm:p-4 flex flex-col items-center justify-center"
+              className="bg-[#101D35]/85 backdrop-blur-xl rounded-3xl border border-[#243650] shadow-lg hover:border-[#38BDF8]/40 hover:bg-[#172945]/90 hover:shadow-[0_12px_35px_rgba(8,13,24,0.8),0_0_20px_rgba(37,99,235,0.18)] transition-all overflow-hidden group cursor-pointer p-3 sm:p-4 flex flex-col items-center justify-center"
             >
               <img
                 src={item.image}

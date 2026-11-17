@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Code2 } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { GithubIcon } from './SocialIcons';
 import { StudentProject } from '../data/projects';
 
@@ -9,9 +9,9 @@ interface ProjectCardProps {
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
   return (
-    <div className="bg-[#0a0f1e]/85 backdrop-blur-xl rounded-3xl border border-white/10 shadow-lg hover:shadow-[0_0_30px_rgba(99,102,241,0.25)] hover:border-indigo-500/50 transition-all duration-300 flex flex-col overflow-hidden group">
+    <div className="bg-[#101D35]/85 backdrop-blur-xl rounded-3xl border border-[#243650] shadow-lg hover:shadow-[0_12px_35px_rgba(8,13,24,0.8),0_0_20px_rgba(37,99,235,0.18)] hover:border-[#38BDF8]/40 hover:bg-[#172945]/90 transition-all duration-300 flex flex-col overflow-hidden group">
       {/* Project Thumbnail with Aspect Ratio */}
-      <div className="relative aspect-video w-full overflow-hidden bg-slate-950">
+      <div className="relative aspect-video w-full overflow-hidden bg-[#080D18]">
         <img
           src={project.thumbnail}
           alt={project.title}
@@ -22,7 +22,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
           }}
         />
         <div className="absolute top-3 right-3">
-          <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold uppercase bg-slate-950/80 text-cyan-300 backdrop-blur-md border border-cyan-500/30">
+          <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold uppercase bg-[#080D18]/85 text-[#38BDF8] backdrop-blur-md border border-[#243650]">
             {project.category}
           </span>
         </div>
@@ -36,25 +36,25 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             <img
               src={project.studentAvatar}
               alt={project.studentName}
-              className="w-9 h-9 rounded-full object-cover border-2 border-indigo-500/40 shadow-xs"
+              className="w-9 h-9 rounded-full object-cover border-2 border-[#2563EB]/40 shadow-xs"
             />
             <div className="min-w-0">
-              <h4 className="text-xs font-semibold text-slate-200 truncate">
+              <h4 className="text-xs font-semibold text-[#DCE6F5] truncate">
                 {project.studentName}
               </h4>
-              <p className="text-[11px] text-slate-400 font-mono truncate">
+              <p className="text-[11px] text-[#9FB0C8] font-mono truncate">
                 {project.studentRole}
               </p>
             </div>
           </div>
 
           {/* Project Title */}
-          <h3 className="text-base font-bold text-white mb-2 leading-snug group-hover:text-cyan-300 transition-colors">
+          <h3 className="text-base font-bold text-[#DCE6F5] mb-2 leading-snug group-hover:text-[#38BDF8] transition-colors">
             {project.title}
           </h3>
 
           {/* Project Description */}
-          <p className="text-xs sm:text-sm text-slate-400 line-clamp-3 mb-4 leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#9FB0C8] line-clamp-3 mb-4 leading-relaxed">
             {project.description}
           </p>
 
@@ -63,7 +63,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             {project.technologies.map((tech, idx) => (
               <span
                 key={idx}
-                className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-white/5 text-slate-300 border border-white/10"
+                className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-[#080D18] text-[#9FB0C8] border border-[#243650]"
               >
                 {tech}
               </span>
@@ -72,15 +72,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
         </div>
 
         {/* Action Button: View Project */}
-        <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+        <div className="pt-3 border-t border-[#243650] flex items-center justify-between">
           <a
             href={project.liveUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-mono font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl transition-all shadow-md group/btn"
+            className="btn-primary text-xs py-2 px-4"
           >
             <span>LIVE DEMO</span>
-            <ExternalLink size={13} className="group-hover/btn:translate-x-0.5 transition-transform" />
+            <ExternalLink size={13} />
           </a>
 
           {project.githubUrl && (
@@ -89,7 +89,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
               target="_blank"
               rel="noopener noreferrer"
               title="View Repository"
-              className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-[#9FB0C8] hover:text-[#DCE6F5] hover:bg-[#172945] rounded-lg transition-colors border border-transparent hover:border-[#243650]"
             >
               <GithubIcon size={16} />
             </a>

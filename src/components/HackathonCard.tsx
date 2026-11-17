@@ -12,14 +12,14 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({ hackathon, onOpenG
 
   return (
     <div
-      className={`bg-[#0a0f1e]/90 backdrop-blur-xl rounded-3xl border transition-all duration-300 overflow-hidden shadow-xl flex flex-col lg:flex-row ${
+      className={`bg-[#101D35]/85 backdrop-blur-xl rounded-3xl border transition-all duration-300 overflow-hidden shadow-xl flex flex-col lg:flex-row ${
         isUpcoming
-          ? 'border-indigo-500/60 shadow-[0_0_40px_rgba(99,102,241,0.25)] ring-1 ring-cyan-500/30'
-          : 'border-white/10 hover:border-indigo-500/40 hover:shadow-[0_0_35px_rgba(99,102,241,0.2)]'
+          ? 'border-[#38BDF8]/60 shadow-[0_12px_40px_rgba(8,13,24,0.9),0_0_25px_rgba(37,99,235,0.25)] ring-1 ring-[#38BDF8]/30'
+          : 'border-[#243650] hover:border-[#38BDF8]/40 hover:bg-[#172945]/90 hover:shadow-[0_12px_35px_rgba(8,13,24,0.8),0_0_20px_rgba(37,99,235,0.15)]'
       }`}
     >
       {/* Event Cover Photo */}
-      <div className="relative lg:w-5/12 aspect-video lg:aspect-auto overflow-hidden bg-slate-950 shrink-0">
+      <div className="relative lg:w-5/12 aspect-video lg:aspect-auto overflow-hidden bg-[#080D18] shrink-0">
         <img
           src={hackathon.coverImage}
           alt={hackathon.title}
@@ -29,26 +29,26 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({ hackathon, onOpenG
         {/* Status Badge */}
         <div className="absolute top-4 left-4 flex flex-wrap gap-2">
           {isUpcoming ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-lg shadow-cyan-500/30">
-              <Sparkles size={13} className="animate-spin text-cyan-200" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-[#2563EB] text-[#DCE6F5] shadow-lg shadow-[#2563EB]/30">
+              <Sparkles size={13} className="text-[#38BDF8] animate-spin" />
               UPCOMING_SPRINT
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-[#101D35] text-[#38BDF8] border border-[#243650] shadow-md">
               <Award size={13} />
               FLAGSHIP_SPRINT
             </span>
           )}
 
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-slate-950/80 text-cyan-300 backdrop-blur-md border border-cyan-500/30">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-[#080D18]/85 text-[#38BDF8] backdrop-blur-md border border-[#243650]">
             <Clock size={12} />
             {hackathon.duration}
           </span>
         </div>
 
         {/* Gallery count tag */}
-        <div className="absolute bottom-4 right-4 px-2.5 py-1 rounded-lg bg-slate-950/80 text-slate-300 text-xs font-mono backdrop-blur-md border border-white/10 flex items-center gap-1.5">
-          <ImageIcon size={13} className="text-cyan-400" />
+        <div className="absolute bottom-4 right-4 px-2.5 py-1 rounded-lg bg-[#080D18]/85 text-[#9FB0C8] text-xs font-mono backdrop-blur-md border border-[#243650] flex items-center gap-1.5">
+          <ImageIcon size={13} className="text-[#38BDF8]" />
           <span>{hackathon.gallery.length} PHOTOS</span>
         </div>
       </div>
@@ -58,39 +58,39 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({ hackathon, onOpenG
         <div>
           {/* Header & Title */}
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            <h3 className="text-lg sm:text-xl font-bold text-[#DCE6F5] tracking-tight">
               {hackathon.title}
             </h3>
           </div>
 
           {/* Venue & Date */}
-          <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-400 font-mono mb-4">
+          <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-[#9FB0C8] font-mono mb-4">
             <div className="flex items-center gap-1.5">
-              <MapPin size={15} className="text-cyan-400 shrink-0" />
+              <MapPin size={15} className="text-[#38BDF8] shrink-0" />
               <span>{hackathon.venue}</span>
             </div>
             {hackathon.date && (
               <div className="flex items-center gap-1.5">
-                <Calendar size={15} className="text-indigo-400 shrink-0" />
+                <Calendar size={15} className="text-[#38BDF8] shrink-0" />
                 <span>{hackathon.date}</span>
               </div>
             )}
           </div>
 
           {/* Description */}
-          <p className="text-sm text-slate-300 leading-relaxed mb-6 font-normal">
+          <p className="text-sm text-[#9FB0C8] leading-relaxed mb-6 font-normal">
             {hackathon.shortDescription}
           </p>
 
           {/* Highlights */}
           <div className="mb-6">
-            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400 mb-2.5">
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#38BDF8] mb-2.5">
               SPRINT_HIGHLIGHTS:
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {hackathon.highlights.map((item, idx) => (
-                <div key={idx} className="flex items-start gap-2 text-xs text-slate-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0" />
+                <div key={idx} className="flex items-start gap-2 text-xs text-[#9FB0C8]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8] mt-1.5 shrink-0" />
                   <span>{item}</span>
                 </div>
               ))}
@@ -99,15 +99,15 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({ hackathon, onOpenG
         </div>
 
         {/* Action and Stats Strip */}
-        <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+        <div className="pt-4 border-t border-[#243650] flex flex-wrap items-center justify-between gap-4">
           {/* Mini Stats */}
           <div className="flex items-center gap-4 sm:gap-6 font-mono">
             {hackathon.stats.slice(0, 2).map((s, idx) => (
               <div key={idx}>
-                <span className="block text-[10px] text-slate-500 uppercase">
+                <span className="block text-[10px] text-[#9FB0C8]/70 uppercase">
                   {s.label}
                 </span>
-                <span className="text-xs sm:text-sm font-bold text-slate-200">
+                <span className="text-xs sm:text-sm font-bold text-[#DCE6F5]">
                   {s.value}
                 </span>
               </div>
@@ -118,11 +118,11 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({ hackathon, onOpenG
           <button
             type="button"
             onClick={() => onOpenGallery(hackathon)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-mono font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl transition-all shadow-[0_0_20px_rgba(99,102,241,0.35)] group/btn"
+            className="btn-primary text-xs py-2.5 px-5"
           >
-            <ImageIcon size={15} className="text-cyan-300" />
+            <ImageIcon size={14} className="text-[#DCE6F5]" />
             <span>VIEW GALLERY & SPECS</span>
-            <ArrowRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
+            <ArrowRight size={14} />
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Terminal, Copy, Check, Sparkles } from 'lucide-react';
+import { Terminal, Copy, Check } from 'lucide-react';
 
 export const TerminalWidget: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'status' | 'hackathon' | 'friday' | 'achieve'>('status');
@@ -60,18 +60,18 @@ export const TerminalWidget: React.FC = () => {
   };
 
   return (
-    <div className="relative rounded-3xl overflow-hidden bg-[#070b16] border border-white/10 shadow-[0_0_50px_rgba(99,102,241,0.25)] flex flex-col font-mono text-xs">
+    <div className="relative rounded-3xl overflow-hidden bg-[#080D18] border border-[#243650] shadow-[0_12px_40px_rgba(8,13,24,0.9),0_0_25px_rgba(37,99,235,0.18)] flex flex-col font-mono text-xs">
       {/* Glow accent halo */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-[#2563EB]/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Terminal Titlebar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#0a1020] border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 bg-[#101D35] border-b border-[#243650]">
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
-          <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
-          <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
-          <span className="ml-2 text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
-            <Terminal size={12} className="text-cyan-400" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#38BDF8] inline-block shadow-[0_0_6px_#38BDF8]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#243650] inline-block" />
+          <span className="ml-2 text-[11px] text-[#9FB0C8] font-semibold flex items-center gap-1.5">
+            <Terminal size={12} className="text-[#38BDF8]" />
             <span>club_interactive_shell</span>
           </span>
         </div>
@@ -85,8 +85,8 @@ export const TerminalWidget: React.FC = () => {
               onClick={() => setActiveTab(tab)}
               className={`px-2 py-1 rounded text-[10px] uppercase font-bold transition-all ${
                 activeTab === tab
-                  ? 'bg-indigo-600/40 text-cyan-300 border border-cyan-400/30 shadow-[0_0_10px_rgba(0,242,254,0.3)]'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-[#2563EB] text-[#DCE6F5] border border-[#38BDF8]/40 shadow-[0_0_10px_rgba(56,189,248,0.25)]'
+                  : 'text-[#9FB0C8] hover:text-[#DCE6F5] hover:bg-[#172945]'
               }`}
             >
               {tab}
@@ -96,22 +96,22 @@ export const TerminalWidget: React.FC = () => {
       </div>
 
       {/* Terminal Body */}
-      <div className="p-5 space-y-3 min-h-[220px] bg-gradient-to-b from-[#070b16] to-[#040710]">
+      <div className="p-5 space-y-3 min-h-[220px] bg-gradient-to-b from-[#080D18] to-[#101D35]/90">
         {/* Command line prompt */}
-        <div className="flex items-center justify-between text-slate-300 border-b border-white/5 pb-2">
+        <div className="flex items-center justify-between text-[#DCE6F5] border-b border-[#243650]/50 pb-2">
           <div className="flex items-center gap-2 truncate">
-            <span className="text-cyan-400 font-bold">sgsu@club:~$</span>
-            <span className="text-white font-medium truncate">{current.cmd}</span>
-            <span className="w-2 h-4 bg-cyan-400 animate-pulse"></span>
+            <span className="text-[#38BDF8] font-bold">sgsu@club:~$</span>
+            <span className="text-[#DCE6F5] font-medium truncate">{current.cmd}</span>
+            <span className="w-2 h-4 bg-[#38BDF8] animate-pulse" />
           </div>
 
           <button
             type="button"
             onClick={handleCopy}
-            className="p-1 text-slate-400 hover:text-white transition-colors"
+            className="p-1 text-[#9FB0C8] hover:text-[#DCE6F5] transition-colors"
             title="Copy command"
           >
-            {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+            {copied ? <Check size={14} className="text-[#38BDF8]" /> : <Copy size={14} />}
           </button>
         </div>
 
@@ -122,10 +122,10 @@ export const TerminalWidget: React.FC = () => {
               key={idx}
               className={`${
                 line.includes('🏆') || line.includes('✔') || line.includes('🚀')
-                  ? 'text-cyan-300 font-medium'
+                  ? 'text-[#38BDF8] font-medium'
                   : line.includes('▶') || line.includes('📅')
-                  ? 'text-indigo-300 font-semibold'
-                  : 'text-slate-400'
+                  ? 'text-[#DCE6F5] font-semibold'
+                  : 'text-[#9FB0C8]'
               }`}
             >
               {line}
@@ -135,10 +135,10 @@ export const TerminalWidget: React.FC = () => {
       </div>
 
       {/* Terminal Bottom Status */}
-      <div className="px-4 py-2 bg-[#050812] border-t border-white/5 flex items-center justify-between text-[10px] text-slate-500">
+      <div className="px-4 py-2 bg-[#080D18] border-t border-[#243650] flex items-center justify-between text-[10px] text-[#9FB0C8]">
         <span>SESSION: ENCRYPTED // SGSU_WS</span>
-        <span className="text-emerald-400 flex items-center gap-1 font-mono">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        <span className="text-[#38BDF8] flex items-center gap-1.5 font-mono">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8] animate-pulse" />
           LIVE SHELL
         </span>
       </div>
