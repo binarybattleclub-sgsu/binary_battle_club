@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Code2, Shield, Brain, Sparkles } from 'lucide-react';
 import { ProjectLabItem } from '../../data/projectLabData';
 
@@ -19,11 +19,10 @@ export const ProjectThumbnail: React.FC<ProjectThumbnailProps> = ({
   objectFit = 'contain',
   showCategoryBadge = false,
 }) => {
-  const primaryUrl = project.thumbnailUrl || project.thumbnailAsset || '';
-
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [activeSrc, setActiveSrc] = useState<string>('');
   const [fallbackAttempted, setFallbackAttempted] = useState<boolean>(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   // Reset state whenever the project or thumbnail URL changes
   useEffect(() => {
@@ -39,22 +38,19 @@ export const ProjectThumbnail: React.FC<ProjectThumbnailProps> = ({
     setFallbackAttempted(false);
   }, [project.id, project.thumbnailUrl, project.thumbnailAsset]);
 
+  // Check if browser already has the image cached
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      setStatus('loaded');
+    }
+  }, [activeSrc]);
+
   const handleImageLoad = () => {
     setStatus('loaded');
   };
 
   const handleImageError = () => {
-    // If the image failed on drive.google.com/thumbnail, attempt alternative lh3 endpoint
-    if (!fallbackAttempted && activeSrc.includes('drive.google.com/thumbnail')) {
-      const match = activeSrc.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-      if (match && match[1]) {
-        setFallbackAttempted(true);
-        setActiveSrc(`https://lh3.googleusercontent.com/d/${match[1]}=w1600`);
-        return;
-      }
-    }
-
-    // If a local matched asset exists and wasn't tried yet
+    // 1. If a local matched asset exists and wasn't tried yet
     if (
       project.thumbnailAsset &&
       project.thumbnailAsset !== activeSrc &&
@@ -62,6 +58,16 @@ export const ProjectThumbnail: React.FC<ProjectThumbnailProps> = ({
     ) {
       setActiveSrc(project.thumbnailAsset);
       return;
+    }
+
+    // 2. If the image failed on drive.google.com/thumbnail, attempt alternative lh3 endpoint
+    if (!fallbackAttempted && activeSrc.includes('drive.google.com/thumbnail')) {
+      const match = activeSrc.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        setFallbackAttempted(true);
+        setActiveSrc(`https://lh3.googleusercontent.com/d/${match[1]}=w1600`);
+        return;
+      }
     }
 
     // All endpoints failed or image is unavailable
@@ -107,6 +113,7 @@ export const ProjectThumbnail: React.FC<ProjectThumbnailProps> = ({
       {/* 2. Active Image (Hidden until loaded, then smoothly revealed) */}
       {activeSrc && status !== 'error' && (
         <img
+          ref={imgRef}
           key={activeSrc}
           src={activeSrc}
           alt={project.title}
@@ -151,8 +158,10 @@ export const ProjectThumbnail: React.FC<ProjectThumbnailProps> = ({
         </div>
       )}
 
-      {/* Subtle bottom shadow vignette for depth */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#101D35]/80 via-transparent to-black/20 pointer-events-none" />
+      {/* Subtle bottom shadow vignette for depth (only for cover images) */}
+      {objectFit === 'cover' && status === 'loaded' && (
+        <div className="absolute inset-0 bg-gradient-to-t from-[#101D35]/80 via-transparent to-black/20 pointer-events-none" />
+      )}
     </div>
   );
 };

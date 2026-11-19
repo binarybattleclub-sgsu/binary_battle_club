@@ -2,9 +2,60 @@ import { ProjectLabItem, StudentProfile } from '../data/projectLabData';
 import fallbackProjectData from '../data/project-data.json';
 
 export const SHEETDB_API_ENDPOINT = 'https://sheetdb.io/api/v1/ja94zu4m36qlw';
-export const CACHE_STORAGE_KEY = 'bbc_project_lab_data_v3';
-export const CACHE_TIMESTAMP_KEY = 'bbc_project_lab_timestamp_v3';
+export const CACHE_STORAGE_KEY = 'bbc_project_lab_data_v4';
+export const CACHE_TIMESTAMP_KEY = 'bbc_project_lab_timestamp_v4';
 export const SYNC_INTERVAL_MS = 60000; // 60 seconds
+
+/**
+ * Direct mapping of Google Drive File IDs to authentic high-resolution presentation artwork.
+ * Verified against presentation slides and the official submission catalog.
+ */
+export const DRIVE_ID_TO_ASSET_MAP: Record<string, string> = {
+  // 1. BinBrain AI – Smart Waste Management (Ashu Patel)
+  '1WtGt9v9mutStceZAza2n4qm-rQrCorUA': '/images/project_lab/matched/binbrain_ai.png',
+  // 2. DIMPY'S COSMOS (Dimpy Rai - Row 2 & Row 6)
+  '1Fxcf_YsbSGpHEH-xsQ8r3jxxhes2nhhb': '/images/project_lab/matched/dimpy_cosmos.png',
+  '1VdKm1J5Pakxb5JJvKey_kCWTHUYR91l5': '/images/project_lab/matched/dimpy_cosmos.png',
+  // 3. Music Royalty Vault (Ashu Patel)
+  '1pdpeV3g_x_8JC3aJG2m8fAIA1qiSAdGd': '/images/project_lab/matched/music_royalty_vault.png',
+  // 4. AISECT EXCELLENCE DASHBOARD (Irfan Ansari)
+  '13RXccOIKr3GO_UxxsxNB13k17Ha6nLCP': '/images/project_lab/unmatched_from_ppt/image5.png',
+  // 5. Social Pulse – Real-Time Sentiment Analysis (Irfan Ansari)
+  '1uJWcGGJQLla2QA_qiuKFq0niCANCHgu7': '/images/project_lab/unmatched_from_ppt/image16.png',
+  // 6. Cyber safe portal (Sakshi Ahirwar)
+  '1vUuF4MUTMjhoNFQ3fRF7-qZcssGvESau': '/images/project_lab/matched/cybersafe_portal.jpg',
+  // 7. Smart notice board (Sakshi Ahirwar)
+  '1eAbwdDSwilvtTBVwbIuW1KR97riqcqMD': '/images/project_lab/matched/smart_notice_board.png',
+  // 8. SpendWise – Personal Expense & Budget Tracker (Raushan Kumar & Soumya Yadav - Row 9 & Row 10)
+  '1LxQsQ-FGwpx5gxFA9iJqEJtQEu5YLke5': '/images/project_lab/matched/spendwise.png',
+  '1ckAMA9LP4uzxufHJVXZNB63oIz_n1tPu': '/images/project_lab/matched/spendwise.png',
+  // 9. AI Examiner (Irfan Ansari)
+  '1Ue2ZtSQWGoptgX4xTtC2I6zkyYMFA2x7': '/images/project_lab/unmatched_from_ppt/image10.png',
+  // 10. Cyber Qwest (Sakshi Ahirwar)
+  '1wp4EzfL2_mgdCYzBKIqQfTKwT99Szo4G': '/images/project_lab/unmatched_from_ppt/image9.jpg',
+  // 11. Resumate AI (Soumya Yadav)
+  '13oQDZFY-BYA6gStYIN9zxHUMs2nU1AIY': '/images/project_lab/unmatched_from_ppt/image8.png',
+  // 12. App for makeup brand / Glow Botany (Gouri Pandey)
+  '14Tqm7ODhg9NeWLq5Owe__VYPz8yNoPZg': '/images/project_lab/unmatched_from_ppt/image15.png',
+  // 13. Particles.AI (Syed Faizan Ali)
+  '1wDGTWMWsgWeapuMtnCy9FBpU_NuCJIey': '/images/project_lab/matched/particles_ai.png',
+  // 14. PixelMe.Faizan (Syed Faizan Ali)
+  '1x0WCmAOBf-feWLP93GRTOwhTLDcP6cIT': '/images/project_lab/matched/pixelme.png',
+  // 15. 3D Portfolio (Dimpy Rai)
+  '1qNYy7jCro-v8ppC8Qs4dKjpsLwncvhr8': '/images/project_lab/unmatched_from_ppt/image12.png',
+  // 16. Ai diwali photo booth (Dimpy Rai)
+  '1yE_QFRMyn0gzx0g3KsfqxbzornJDTHJ0': '/images/project_lab/unmatched_from_ppt/image25.png',
+  // 17. VocaGuide (Devesh Kumar Sen)
+  '1Ch6LMeOc_9mjfagfqlitFVVfFh9uCXD6': '/images/project_lab/unmatched_from_ppt/image23.jpeg',
+  // 18. Drishti AI – Eyes for the Blind (Juhi Pawar)
+  '1KG1MxetsUgA-KZQ8PVqo9TylXlEURWIg': '/images/project_lab/matched/drishti_ai.jpeg',
+  // 19. Air Canvas Pro: Horizon (Syed Faizan Ali)
+  '1wWJTryVRsslKIBlNA0J2Gs5NMWkZs_Wv': '/images/project_lab/unmatched_from_ppt/image13.png',
+  // 20. AEGIS (Hemant Singroly & Soumya Malviya)
+  '1CebkayPrv7CqTwBP4qUXYN4dS_7-D-Xf': '/images/project_lab/unmatched_from_ppt/image19.jpg',
+  // 21. SHANU (AI CHATBOT) (Ayushi Tripathi)
+  '1bHRHFF2KU9GMgvw5N-J4kojibJWY8Dap': '/images/project_lab/unmatched_from_ppt/image24.png',
+};
 
 // Known matched local assets for verified projects
 const LOCAL_ASSET_MAP: Record<string, string> = {
@@ -34,12 +85,51 @@ const URL_ASSET_MAP: Record<string, string> = {
   'https://cybersafe-portal.netlify.app': '/images/project_lab/matched/cybersafe_portal.jpg',
   'https://binbrain.netlify.app': '/images/project_lab/matched/binbrain_ai.png',
   'https://dimpys-cosmos.netlify.app': '/images/project_lab/matched/dimpy_cosmos.png',
+  'https://dimpycosmos.lovable.app': '/images/project_lab/matched/dimpy_cosmos.png',
   'https://drishti-ai.vercel.app': '/images/project_lab/matched/drishti_ai.jpeg',
+  'https://drishti-delta-five.vercel.app': '/images/project_lab/matched/drishti_ai.jpeg',
   'https://royaltyvault.netlify.app': '/images/project_lab/matched/music_royalty_vault.png',
   'https://particles-ai.netlify.app': '/images/project_lab/matched/particles_ai.png',
+  'https://particles-ai.vercel.app': '/images/project_lab/matched/particles_ai.png',
   'https://pixelme-ai.netlify.app': '/images/project_lab/matched/pixelme.png',
+  'https://pixelmefaizan.vercel.app': '/images/project_lab/matched/pixelme.png',
   'https://smart-notice-board.netlify.app': '/images/project_lab/matched/smart_notice_board.png',
+  'https://sgsusmartcollegenoticeboard-3671.ai.studio': '/images/project_lab/matched/smart_notice_board.png',
+  'https://aisect-skills-excellence-dashboard.vercel.app': '/images/project_lab/unmatched_from_ppt/image5.png',
+  'https://3d-portfolio-rose-zeta.vercel.app': '/images/project_lab/unmatched_from_ppt/image12.png',
+  'https://festive-selfie-studio-dimpy.lovable.app': '/images/project_lab/unmatched_from_ppt/image25.png',
+  'https://vocaguide.vercel.app': '/images/project_lab/unmatched_from_ppt/image23.jpeg',
+  'https://air-canvas-cyan.vercel.app': '/images/project_lab/unmatched_from_ppt/image13.png',
+  'https://aegis-3d.beacon.host': '/images/project_lab/unmatched_from_ppt/image19.jpg',
+  'https://shanu-speech-companion.lovable.app': '/images/project_lab/unmatched_from_ppt/image24.png',
 };
+
+// Secondary regex keywords for robust fallback matching
+export const KEYWORD_ASSET_MAP: Array<{ match: RegExp; asset: string }> = [
+  { match: /binbrain/i, asset: '/images/project_lab/matched/binbrain_ai.png' },
+  { match: /cosmos/i, asset: '/images/project_lab/matched/dimpy_cosmos.png' },
+  { match: /royalty.*vault/i, asset: '/images/project_lab/matched/music_royalty_vault.png' },
+  { match: /aisect.*excellence/i, asset: '/images/project_lab/unmatched_from_ppt/image5.png' },
+  { match: /social.*pulse/i, asset: '/images/project_lab/unmatched_from_ppt/image16.png' },
+  { match: /cybersafe|cyber.*safe/i, asset: '/images/project_lab/matched/cybersafe_portal.jpg' },
+  { match: /smart.*notice.*board/i, asset: '/images/project_lab/matched/smart_notice_board.png' },
+  { match: /spendwise/i, asset: '/images/project_lab/matched/spendwise.png' },
+  { match: /examiner|evaluator/i, asset: '/images/project_lab/unmatched_from_ppt/image10.png' },
+  { match: /cyber.*qwest|cyberquest/i, asset: '/images/project_lab/unmatched_from_ppt/image9.jpg' },
+  { match: /resumate/i, asset: '/images/project_lab/unmatched_from_ppt/image8.png' },
+  { match: /makeup|glow.*botany/i, asset: '/images/project_lab/unmatched_from_ppt/image15.png' },
+  { match: /particles/i, asset: '/images/project_lab/matched/particles_ai.png' },
+  { match: /pixelme/i, asset: '/images/project_lab/matched/pixelme.png' },
+  { match: /3d.*portfolio/i, asset: '/images/project_lab/unmatched_from_ppt/image12.png' },
+  { match: /diwali.*photo/i, asset: '/images/project_lab/unmatched_from_ppt/image25.png' },
+  { match: /vocaguide/i, asset: '/images/project_lab/unmatched_from_ppt/image23.jpeg' },
+  { match: /drishti/i, asset: '/images/project_lab/matched/drishti_ai.jpeg' },
+  { match: /air.*canvas/i, asset: '/images/project_lab/unmatched_from_ppt/image13.png' },
+  { match: /aegis/i, asset: '/images/project_lab/unmatched_from_ppt/image19.jpg' },
+  { match: /shanu/i, asset: '/images/project_lab/unmatched_from_ppt/image24.png' },
+  { match: /pmi/i, asset: '/images/project_lab/matched/pmi_ai.png' },
+  { match: /student.*management/i, asset: '/images/project_lab/matched/student_management.png' },
+];
 
 /**
  * Normalizes text to a clean URL slug
@@ -213,6 +303,73 @@ export function normalizeThumbnailUrl(rawUrl: string): string {
 }
 
 /**
+ * Extracts Google Drive file ID from a URL
+ */
+export function extractDriveFileId(url: string): string {
+  if (!url) return '';
+  const matchId = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (matchId && matchId[1]) return matchId[1];
+  const matchPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (matchPath && matchPath[1]) return matchPath[1];
+  return '';
+}
+
+/**
+ * Resolves the authentic project thumbnail:
+ * 1. Checks direct Google Drive File ID match against verified presentation artwork.
+ * 2. Checks canonical working URL against verified deployed applications.
+ * 3. Checks project title / slug keywords against known artwork assets.
+ * 4. Returns local high-res asset as primary whenever available.
+ * 5. If no local asset exists, returns the normalized Google Drive URL as primary.
+ */
+export function resolveProjectThumbnail(
+  rawThumbnailUrl: string,
+  projectName: string,
+  primaryUrl: string,
+  canonicalUrl: string
+): { primary: string; rawDriveUrl: string; hasLocalAsset: boolean } {
+  const driveId = extractDriveFileId(rawThumbnailUrl);
+  const normalizedDrive = normalizeThumbnailUrl(rawThumbnailUrl);
+
+  // 1. Direct Drive File ID match
+  if (driveId && DRIVE_ID_TO_ASSET_MAP[driveId]) {
+    return {
+      primary: DRIVE_ID_TO_ASSET_MAP[driveId],
+      rawDriveUrl: normalizedDrive,
+      hasLocalAsset: true,
+    };
+  }
+
+  // 2. Canonical URL match
+  if (canonicalUrl && URL_ASSET_MAP[canonicalUrl]) {
+    return {
+      primary: URL_ASSET_MAP[canonicalUrl],
+      rawDriveUrl: normalizedDrive,
+      hasLocalAsset: true,
+    };
+  }
+
+  // 3. Keyword / title / slug match
+  const testString = `${projectName} ${primaryUrl}`.toLowerCase();
+  for (const item of KEYWORD_ASSET_MAP) {
+    if (item.match.test(testString)) {
+      return {
+        primary: item.asset,
+        rawDriveUrl: normalizedDrive,
+        hasLocalAsset: true,
+      };
+    }
+  }
+
+  // 4. Fallback to Google Drive URL (or raw image URL if non-Drive)
+  return {
+    primary: normalizedDrive || rawThumbnailUrl || '',
+    rawDriveUrl: normalizedDrive,
+    hasLocalAsset: false,
+  };
+}
+
+/**
  * Infers category based on project title, description, or URL
  */
 export function inferProjectCategory(title: string, desc: string, url: string): string {
@@ -339,8 +496,13 @@ export function processSpreadsheetRecords(rawRows: RawSheetRow[]): {
     // 2. Parse contributors
     const contributors = parseContributors(row.studentName);
 
-    // 3. Normalized thumbnail URL
-    const normalizedThumb = normalizeThumbnailUrl(row.thumbnail);
+    // 3. Resolve project thumbnail
+    const resolvedThumb = resolveProjectThumbnail(
+      row.thumbnail,
+      row.projectName,
+      primaryUrl,
+      canonical
+    );
 
     // 4. Check for existing project to merge
     if (projectsByCanonicalUrl.has(dedupeKey)) {
@@ -376,10 +538,14 @@ export function processSpreadsheetRecords(rawRows: RawSheetRow[]): {
         existing.description = row.description;
       }
 
-      // Keep thumbnail if previously missing
-      if (!existing.thumbnailUrl && normalizedThumb) {
-        existing.thumbnailUrl = normalizedThumb;
-        existing.thumbnailAsset = normalizedThumb;
+      // Update thumbnail if new row has verified local asset or if currently missing
+      if (resolvedThumb.hasLocalAsset && (!existing.thumbnailAsset || !existing.thumbnailAsset.startsWith('/images/'))) {
+        existing.thumbnailAsset = resolvedThumb.primary;
+        existing.thumbnailUrl = resolvedThumb.primary;
+        existing.originalThumbnail = row.thumbnail;
+      } else if (!existing.thumbnailUrl && resolvedThumb.primary) {
+        existing.thumbnailUrl = resolvedThumb.primary;
+        existing.thumbnailAsset = resolvedThumb.primary;
         existing.originalThumbnail = row.thumbnail;
       }
 
@@ -409,9 +575,7 @@ export function processSpreadsheetRecords(rawRows: RawSheetRow[]): {
       const isWebUrl = primaryUrl.startsWith('http://') || primaryUrl.startsWith('https://');
       const isGithub = primaryUrl.toLowerCase().includes('github.com');
 
-      // Check local asset fallback if available
-      const localMatched = LOCAL_ASSET_MAP[baseSlug] || URL_ASSET_MAP[canonical];
-      const finalThumb = normalizedThumb || localMatched || '';
+      const finalThumb = resolvedThumb.primary;
 
       const tagline = deriveProjectTagline(row.projectName, category, row.description);
       const contributorIds = contributors.map((c) => makeSlug(c));
@@ -549,12 +713,24 @@ export function getCachedProjectLabData(): {
     if (rawData) {
       const parsed = JSON.parse(rawData);
       return {
-        projects: (parsed.projects || []).map((p: any) => ({
-          ...p,
-          thumbnailUrl: p.thumbnailUrl || p.thumbnailAsset || '',
-          thumbnailAsset: p.thumbnailUrl || p.thumbnailAsset || '',
-          featured: true,
-        })),
+        projects: (parsed.projects || []).map((p: any) => {
+          const resolved = resolveProjectThumbnail(
+            p.originalThumbnail || p.thumbnailUrl || p.thumbnailAsset || '',
+            p.title || '',
+            p.workingUrl || p.githubUrl || '',
+            normalizeCanonicalUrl(p.workingUrl || '')
+          );
+          const finalThumb = resolved.hasLocalAsset
+            ? resolved.primary
+            : p.thumbnailUrl || p.thumbnailAsset || resolved.primary;
+
+          return {
+            ...p,
+            thumbnailUrl: finalThumb,
+            thumbnailAsset: finalThumb,
+            featured: true,
+          };
+        }),
         students: parsed.students || [],
         timestamp: rawTime ? parseInt(rawTime, 10) : null,
       };
