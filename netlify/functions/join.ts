@@ -1,6 +1,6 @@
 /**
  * Netlify Function: /.netlify/functions/join
- * Handles secure submission forwarding to Google Apps Script.
+ * Secure SheetDB integration for Binary Battle Club Join Form.
  */
 
 interface ApplicationPayload {
@@ -11,7 +11,6 @@ interface ApplicationPayload {
   semester: string;
   reasonToJoin: string;
   website?: string;
-  authToken?: string;
 }
 
 const rateLimitMap = new Map<string, number[]>();
@@ -105,52 +104,78 @@ export const handler = async (event: any) => {
       };
     }
 
-    const appsScriptUrl = process.env.GOOGLE_APPS_SCRIPT_URL;
-    if (!appsScriptUrl || !appsScriptUrl.startsWith('http')) {
-      return {
-        statusCode: 503,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          success: false,
-          error: 'GOOGLE_APPS_SCRIPT_URL environment variable is not configured on the server.',
-        }),
-      };
+    const sheetDbBaseUrl =
+      process.env.SHEETDB_API_URL || 'https://sheetdb.io/api/v1/9plr44lrtzu9u';
+    const targetTab = process.env.SHEETDB_TARGET_TAB || 'Applied Members';
+    const bearerToken = process.env.SHEETDB_BEARER_TOKEN || '';
+
+    const now = new Date();
+    const formattedDate = now.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).replace(/[/]/g, '-');
+
+    const sheetDbUrl = `${sheetDbBaseUrl.replace(/\/+$/, '')}?sheet=${encodeURIComponent(targetTab)}`;
+
+    const sheetDbPayload = {
+      data: [
+        {
+          'Name': fullName,
+          'University Email': email,
+          'Enrollment Number': studentId,
+          'Department': schoolDepartment,
+          'Current Semester': semester,
+          'Notes': reasonToJoin,
+          'Application Date': formattedDate,
+          'Application Status': 'Pending',
+        },
+      ],
+      return_values: true,
+    };
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+
+    if (bearerToken && bearerToken.trim() !== '') {
+      headers['Authorization'] = `Bearer ${bearerToken.trim()}`;
     }
 
-    const response = await fetch(appsScriptUrl, {
+    const response = await fetch(sheetDbUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fullName,
-        email,
-        studentId,
-        schoolDepartment,
-        semester,
-        reasonToJoin,
-        authToken: process.env.GOOGLE_APPS_SCRIPT_SECRET || '',
-      }),
-      redirect: 'follow',
+      headers,
+      body: JSON.stringify(sheetDbPayload),
     });
 
-    const scriptResult = await response.json();
-    if (scriptResult.status !== 'success') {
+    const resStatus = response.status;
+    const resText = await response.text();
+
+    if (resStatus === 201 || resStatus === 200) {
       return {
-        statusCode: 400,
+        statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          success: false,
-          error: scriptResult.message || 'Spreadsheet update failed.',
+          success: true,
+          message: 'Application recorded successfully in Google Sheets via SheetDB.',
+          timestamp: formattedDate,
+          method: 'SheetDB',
         }),
       };
     }
 
     return {
-      statusCode: 200,
+      statusCode: resStatus >= 400 && resStatus < 500 ? resStatus : 502,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        success: true,
-        message: 'Application recorded successfully in Google Sheets.',
-        timestamp: scriptResult.timestamp || new Date().toISOString(),
+        success: false,
+        error: resText || 'SheetDB rejected submission.',
       }),
     };
   } catch (error: any) {

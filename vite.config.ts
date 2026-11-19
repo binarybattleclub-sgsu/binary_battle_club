@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
       {
         name: 'api-join-dev-middleware',
         configureServer(server) {
-          server.middlewares.use('/api/join', (req, res, next) => {
+          const handleJoinRequest = (req: any, res: any) => {
             if (req.method !== 'POST') {
               res.statusCode = 405;
               res.setHeader('Content-Type', 'application/json');
@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
             }
 
             let bodyStr = '';
-            req.on('data', (chunk) => {
+            req.on('data', (chunk: any) => {
               bodyStr += chunk;
             });
 
@@ -67,54 +67,127 @@ export default defineConfig(({ mode }) => {
                   return;
                 }
 
-                // 3. Check for configured Google Apps Script Webhook URL
-                const scriptUrl = process.env.GOOGLE_APPS_SCRIPT_URL || env.GOOGLE_APPS_SCRIPT_URL;
+                // 3. Format Date/Timestamp
+                const now = new Date();
+                const formattedDate = now.toLocaleString('en-IN', {
+                  timeZone: 'Asia/Kolkata',
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false,
+                }).replace(/[/]/g, '-');
 
-                if (!scriptUrl || !scriptUrl.startsWith('http')) {
-                  res.statusCode = 503;
+                // 4. Try SheetDB Create API
+                const sheetDbBaseUrl =
+                  process.env.SHEETDB_API_URL || env.SHEETDB_API_URL || 'https://sheetdb.io/api/v1/9plr44lrtzu9u';
+                const targetTab = process.env.SHEETDB_TARGET_TAB || env.SHEETDB_TARGET_TAB || 'Applied Members';
+                const bearerToken = process.env.SHEETDB_BEARER_TOKEN || env.SHEETDB_BEARER_TOKEN || '';
+
+                const sheetDbUrl = `${sheetDbBaseUrl.replace(/\/+$/, '')}?sheet=${encodeURIComponent(targetTab)}`;
+
+                const sheetDbPayload = {
+                  data: [
+                    {
+                      'Name': fullName,
+                      'University Email': email,
+                      'Enrollment Number': studentId,
+                      'Department': schoolDepartment,
+                      'Current Semester': semester,
+                      'Notes': reasonToJoin,
+                      'Application Date': formattedDate,
+                      'Application Status': 'Pending',
+                    },
+                  ],
+                  return_values: true,
+                };
+
+                const headers: Record<string, string> = {
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                };
+                if (bearerToken && bearerToken.trim() !== '') {
+                  headers['Authorization'] = `Bearer ${bearerToken.trim()}`;
+                }
+
+                const sheetDbRes = await fetch(sheetDbUrl, {
+                  method: 'POST',
+                  headers,
+                  body: JSON.stringify(sheetDbPayload),
+                });
+
+                const sheetDbText = await sheetDbRes.text();
+                let sheetDbJson: any = null;
+                try {
+                  sheetDbJson = JSON.parse(sheetDbText);
+                } catch {}
+
+                if (sheetDbRes.status === 201 || (sheetDbRes.status === 200 && (sheetDbJson?.created === 1 || Array.isArray(sheetDbJson)))) {
+                  res.statusCode = 200;
                   res.setHeader('Content-Type', 'application/json');
                   res.end(JSON.stringify({
-                    success: false,
-                    error:
-                      'GOOGLE_APPS_SCRIPT_URL is not configured. Please add your deployed Google Apps Script Web App URL to your .env file.',
+                    success: true,
+                    message: 'Application recorded successfully in Google Sheets via SheetDB.',
+                    timestamp: formattedDate,
+                    method: 'SheetDB',
                   }));
                   return;
                 }
 
-                // 4. Forward to Google Apps Script
-                const forwardRes = await fetch(scriptUrl, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    fullName,
-                    email,
-                    studentId,
-                    schoolDepartment,
-                    semester,
-                    reasonToJoin,
-                    authToken: process.env.GOOGLE_APPS_SCRIPT_SECRET || env.GOOGLE_APPS_SCRIPT_SECRET || '',
-                  }),
-                  redirect: 'follow',
-                });
+                // If SheetDB fails due to empty Row 1 in sheet
+                const isEmptyHeader = typeof sheetDbText === 'string' && sheetDbText.includes('Spreadsheet is empty');
+                const appsScriptUrl = process.env.GOOGLE_APPS_SCRIPT_URL || env.GOOGLE_APPS_SCRIPT_URL;
 
-                const scriptData = await forwardRes.json();
+                // Technical fallback if SheetDB is blocked by sheet layout
+                if (isEmptyHeader && appsScriptUrl && appsScriptUrl.startsWith('http')) {
+                  const gasRes = await fetch(appsScriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      fullName,
+                      email,
+                      studentId,
+                      schoolDepartment,
+                      semester,
+                      reasonToJoin,
+                      authToken: process.env.GOOGLE_APPS_SCRIPT_SECRET || env.GOOGLE_APPS_SCRIPT_SECRET || '',
+                    }),
+                    redirect: 'follow',
+                  });
+                  const gasJson = await gasRes.json();
+                  if (gasJson.status === 'success') {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({
+                      success: true,
+                      message: 'Application recorded successfully in Applied Members tab.',
+                      timestamp: gasJson.timestamp || formattedDate,
+                      method: 'Google Apps Script (Dashboard Preserved)',
+                    }));
+                    return;
+                  }
+                }
 
-                if (scriptData.status !== 'success') {
+                if (isEmptyHeader) {
                   res.statusCode = 400;
                   res.setHeader('Content-Type', 'application/json');
                   res.end(JSON.stringify({
                     success: false,
-                    error: scriptData.message || 'Spreadsheet rejected submission.',
+                    error:
+                      'SheetDB Error: Row 1 of "Applied Members" is empty. SheetDB requires column headers in Row 1. Row 10 headers are not accessible by SheetDB until moved to Row 1.',
+                    detail: sheetDbText,
                   }));
                   return;
                 }
 
-                res.statusCode = 200;
+                res.statusCode = sheetDbRes.status >= 400 && sheetDbRes.status < 500 ? sheetDbRes.status : 502;
                 res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify({
-                  success: true,
-                  message: 'Application recorded successfully in Google Sheets.',
-                  timestamp: scriptData.timestamp || new Date().toISOString(),
+                  success: false,
+                  error: sheetDbJson?.error || 'SheetDB rejected submission.',
+                  detail: sheetDbText,
                 }));
               } catch (err: any) {
                 res.statusCode = 500;
@@ -125,7 +198,11 @@ export default defineConfig(({ mode }) => {
                 }));
               }
             });
-          });
+          };
+
+          // Register for both /api/join-application and /api/join
+          server.middlewares.use('/api/join-application', handleJoinRequest);
+          server.middlewares.use('/api/join', handleJoinRequest);
         },
       },
     ],

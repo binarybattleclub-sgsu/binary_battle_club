@@ -82,7 +82,7 @@ export async function submitMembershipApplication(
   }
 
   try {
-    const response = await fetch('/api/join', {
+    const response = await fetch('/api/join-application', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
