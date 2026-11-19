@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { ASSETS } from '../data/assets';
 import { MarqueeTicker } from '../components/MarqueeTicker';
+import { HeroSlideshow } from '../components/HeroSlideshow';
 
 export const Home: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'internal' | 'national'>('all');
@@ -123,48 +124,48 @@ export const Home: React.FC = () => {
       <section className="relative pt-2 pb-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           
-          {/* Left Column: Asymmetric Photography Collage */}
-          <div className="lg:col-span-6 relative">
-            <div className="relative mx-auto max-w-md lg:max-w-none">
-              {/* Primary Top Image */}
-              <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#243650] shadow-[0_20px_50px_rgba(8,13,24,0.9)] aspect-[4/3] sm:aspect-[14/10] bg-[#101D35]">
-                <img
-                  src={ASSETS.hackathons.sgsu1}
-                  alt="Students coding together at SGSU Hackathon"
-                  className="w-full h-full object-cover contrast-110 brightness-95 hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#080D18]/80 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute bottom-3.5 left-3.5 px-3 py-1 rounded-full bg-[#080D18]/80 backdrop-blur-md border border-[#243650] text-[11px] font-mono tracking-wider text-[#DCE6F5] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />
-                  <span>SGSU HACKATHON ARENA</span>
-                </div>
-              </div>
+          {/* Left Column: Hero Community Slideshow & Masterclass Promotion */}
+          <div className="lg:col-span-6">
+            <div className="relative mx-auto max-w-md lg:max-w-none space-y-3 sm:space-y-4">
+              <HeroSlideshow />
 
-              {/* Overlapping Secondary Image (Offset Bottom Right) */}
-              <div className="absolute -bottom-8 -right-3 sm:-bottom-11 sm:-right-6 w-3/5 rounded-2xl overflow-hidden border-2 border-[#080D18] shadow-[0_25px_60px_rgba(8,13,24,0.95)] aspect-[4/3] bg-[#101D35] hidden sm:block">
-                <img
-                  src={ASSETS.workshops.friday1}
-                  alt="Student workshop session"
-                  className="w-full h-full object-cover object-top contrast-110 brightness-95 hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#080D18]/80 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute bottom-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-[#080D18]/85 backdrop-blur-md border border-[#243650] text-[10px] font-mono text-[#9FB0C8]">
-                  FRIDAY LAB SPRINT
-                </div>
-              </div>
+              {/* Gemini AI Masterclass Promotional Card (Preserved without obscuring faces) */}
+              <div className="relative rounded-2xl overflow-hidden bg-[#101D35]/90 border border-[#243650] hover:border-[#38BDF8]/40 shadow-lg p-2.5 sm:p-3 flex items-center justify-between gap-2.5 sm:gap-3 group transition-all">
+                <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-[#243650] bg-[#080D18] shrink-0 relative">
+                    <img
+                      src={ASSETS.workshops.friday1}
+                      alt="Gemini AI Masterclass"
+                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#080D18]/60 to-transparent pointer-events-none" />
+                  </div>
 
-              {/* Floating Technical Target Reticle Badge */}
-              <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#101D35] text-[#38BDF8] flex items-center justify-center shadow-[0_0_25px_rgba(37,99,235,0.4)] border-2 border-[#2563EB] z-20">
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#38BDF8]/40 flex items-center justify-center">
-                  <div className="w-4 h-4 rounded-full bg-[#2563EB]/30 border border-[#38BDF8] flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#38BDF8] animate-ping" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider bg-[#2563EB]/15 text-[#38BDF8] border border-[#2563EB]/30 truncate">
+                        Weekly Masterclass
+                      </span>
+                      <span className="text-[10px] font-mono text-[#9FB0C8] hidden sm:inline">
+                        SGSU Tech Squad
+                      </span>
+                    </div>
+                    <h4 className="text-xs sm:text-sm font-bold text-[#DCE6F5] truncate group-hover:text-[#38BDF8] transition-colors">
+                      Gemini AI Masterclass & Lab
+                    </h4>
+                    <p className="text-[10px] sm:text-[11px] text-[#9FB0C8] line-clamp-1 mt-0.5">
+                      Every Friday: AI prompt engineering & hands-on prototypes.
+                    </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Technical coordinates tag */}
-              <div className="absolute -bottom-3 left-4 px-3 py-1 rounded-md bg-[#080D18] border border-[#243650] text-[10px] font-mono tracking-widest text-[#9FB0C8]">
-                LAT 23.2599° N • LON 77.4126° E
+                <Link
+                  to="/code-compete"
+                  className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#2563EB]/15 hover:bg-[#2563EB] text-[#38BDF8] hover:text-white border border-[#2563EB]/30 text-[11px] sm:text-xs font-mono font-semibold transition-all shrink-0 flex items-center gap-1 shadow-sm"
+                >
+                  <span>View</span>
+                  <ArrowRight size={12} />
+                </Link>
               </div>
             </div>
           </div>

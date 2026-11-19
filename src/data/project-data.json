@@ -1,0 +1,243 @@
+{
+  "stats": {
+    "verifiedSubmissions": 12,
+    "uniqueProjects": 11,
+    "uniqueStudents": 9,
+    "matchedThumbnails": 9,
+    "unmatchedArchived": 14
+  },
+  "projects": [
+    {
+      "id": "spendwise",
+      "title": "SpendWise – Personal Expense & Budget Tracker",
+      "tagline": "Personal Finance & Smart Budget Management",
+      "description": "SpendWise is a personal finance management application that helps users track income and expenses, manage monthly budgets, monitor savings goals, and analyze spending through a premium dashboard. It also features a special Diwali Planner to simplify festival shopping and expense management.",
+      "category": "Web Development",
+      "contributors": ["Raushan Kumar", "Soumya Yadav"],
+      "contributorIds": ["raushan-kumar", "soumya-yadav"],
+      "isCollaborative": true,
+      "workingUrl": "https://magenta-flan-77eae8.netlify.app",
+      "githubUrl": "",
+      "thumbnailAsset": "/images/project_lab/matched/spendwise.png",
+      "featured": true,
+      "attributionNotes": "Confirmed collaborative project by Raushan Kumar and Soumya Yadav. Note: PowerPoint artwork text credited Raushan Chaurasiya & Soumya Yadav; user confirmed Raushan Kumar."
+    },
+    {
+      "id": "pmi-ai",
+      "title": "PMI.ai – Personal Movie Intelligence",
+      "tagline": "Intelligent Cinema Discovery & AI Recommendations",
+      "description": "PMI.ai (Personal Movie Intelligence) is an intelligent movie discovery platform that brings the world of cinema together in one place. Explore thousands of movies, discover the latest releases, upcoming films, popular titles, and detailed movie information. Find movies that match your interests, explore similar recommendations, and make your movie-watching experience smarter, easier, and more enjoyable.",
+      "category": "AI Projects",
+      "contributors": ["Vishal Maurya"],
+      "contributorIds": ["vishal-maurya"],
+      "isCollaborative": false,
+      "workingUrl": "https://pmi-ai.vercel.app/",
+      "githubUrl": "",
+      "thumbnailAsset": "/images/project_lab/matched/pmi_ai.png",
+      "featured": true,
+      "attributionNotes": "No PowerPoint slide poster found; live web screenshot captured from verified working application."
+    },
+    {
+      "id": "cybersafe-portal",
+      "title": "CyberSafe Portal",
+      "tagline": "Interactive Cybersecurity Awareness & Safety Education",
+      "description": "CyberSafe Portal is a cybersecurity awareness website developed to help users understand online safety and digital protection. It provides educational information about cybersecurity, common online threats, fraud awareness, safety tips, and interactive quizzes. The project aims to promote safe internet practices and encourage users to stay alert, informed, and protected in the digital world.",
+      "category": "Cybersecurity",
+      "contributors": ["Sakshi Ahirwar"],
+      "contributorIds": ["sakshi-ahirwar"],
+      "isCollaborative": false,
+      "workingUrl": "https://cybersafe-portal.netlify.app/",
+      "githubUrl": "",
+      "thumbnailAsset": "/images/project_lab/matched/cybersafe_portal.jpg",
+      "featured": true
+    },
+    {
+      "id": "pixelme-faizan",
+      "title": "PixelMe.Faizan",
+      "tagline": "Interactive Developer Portfolio & Creative Showcase",
+      "description": "PixelMe is an interactive personal portfolio showcasing my technical skills, projects, achievements, and journey in technology. It combines modern web design, immersive visuals, and smooth animations to present my creativity, development experience, and passion for building innovative digital experiences.",
+      "category": "Web Development",
+      "contributors": ["Syed Faizan Ali"],
+      "contributorIds": ["syed-faizan-ali"],
+      "isCollaborative": false,
+      "workingUrl": "https://pixelmefaizan.vercel.app/",
+      "githubUrl": "",
+      "thumbnailAsset": "/images/project_lab/matched/pixelme.png",
+      "featured": true
+    },
+    {
+      "id": "particles-ai",
+      "title": "particles.AI – Interactive AI Voice Assistant",
+      "tagline": "Gesture-Controlled 3D Particle Voice Assistant",
+      "description": "particles.AI is an interactive AI voice assistant featuring a visually immersive, neon particle-based 3D interface. It combines voice and text chat with creative 3D forms, including spheres, hearts, helixes, rings and clouds, alongside gesture-oriented interaction controls.",
+      "category": "AI Projects",
+      "contributors": ["Syed Faizan Ali"],
+      "contributorIds": ["syed-faizan-ali"],
+      "isCollaborative": false,
+      "workingUrl": "https://particles-ai.vercel.app/",
+      "githubUrl": "",
+      "thumbnailAsset": "/images/project_lab/matched/particles_ai.png",
+      "featured": true
+    },
+    {
+      "id": "smart-notice-board",
+      "title": "SGSU Smart College Notice Board",
+      "tagline": "Digital Campus Communication & Notice Dispatch Platform",
+      "description": "SGSU Smart College Notice Board is a digital platform designed to keep students updated with important college announcements, events, academic information, and activities. It provides an organized and accessible way to view notices, stay informed, and improve communication between students and the university through a simple, user-friendly interface.",
+      "category": "Web Development",
+      "contributors": ["Sakshi Ahirwar"],
+      "contributorIds": ["sakshi-ahirwar"],
+      "isCollaborative": false,
+      "workingUrl": "https://sgsusmartcollegenoticeboard-3671.ai.studio",
+      "githubUrl": "",
+      "thumbnailAsset": "/images/project_lab/matched/smart_notice_board.png",
+      "featured": false
+    },
+    {
+      "id": "dimpy-cosmos",
+      "title": "DIMPY'S COSMOS – Explore the Universe",
+      "tagline": "Space Exploration & Astronomy Digital Experience",
+      "description": "COSMOS is a space-themed web project designed to create an engaging and user-friendly digital experience that sparks curiosity about the universe, including planets, stars, galaxies, and the wonders of space. The project combines modern web design with AI-assisted development to bring a creative idea to life.",
+      "category": "Web Development",
+      "contributors": ["Dimpy Rai"],
+      "contributorIds": ["dimpy-rai"],
+      "isCollaborative": false,
+      "workingUrl": "https://dimpycosmos.lovable.app",
+      "githubUrl": "",
+      "thumbnailAsset": "/images/project_lab/matched/dimpy_cosmos.png",
+      "featured": true
+    },
+    {
+      "id": "music-royalty-vault",
+      "title": "Music Royalty Vault",
+      "tagline": "Stellar Blockchain & Soroban Royalty Management Platform",
+      "description": "Music Royalty Vault is a blockchain-powered music royalty management platform designed to bring transparency, security, and efficiency to the music industry. It uses Stellar Blockchain and Soroban Smart Contracts to manage music ownership, track streaming activity, and automate royalty distribution. The platform helps artists and creators manage their music contracts, monitor royalty earnings, track streams, and receive transparent payments through a secure and decentralized system.",
+      "category": "Web Development",
+      "contributors": ["Ashu Patel"],
+      "contributorIds": ["ashu-patel"],
+      "isCollaborative": false,
+      "workingUrl": "https://github.com/ashu-gif10/Music-Royalty-Vault.git",
+      "githubUrl": "https://github.com/ashu-gif10/Music-Royalty-Vault.git",
+      "thumbnailAsset": "/images/project_lab/matched/music_royalty_vault.png",
+      "featured": false
+    },
+    {
+      "id": "binbrain-ai",
+      "title": "BinBrain AI – Smart Waste Management",
+      "tagline": "AI-Powered Waste Detection & Eco-Classification",
+      "description": "BinBrain AI is an AI-powered smart waste management system designed to detect and classify different types of waste using image recognition. The platform allows users to upload waste images and automatically identifies them into three categories: Biodegradable, Recyclable, and Hazardous. It provides AI-based waste detection, classification results, confidence scores, and prediction history through an interactive dashboard. The project aims to promote proper waste segregation, improve recycling practices, and contribute towards a cleaner and more sustainable environment.",
+      "category": "AI Projects",
+      "contributors": ["Ashu Patel"],
+      "contributorIds": ["ashu-patel"],
+      "isCollaborative": false,
+      "workingUrl": "https://github.com/ashu-gif10/BinBrain-AI-Waste-Management.git",
+      "githubUrl": "https://github.com/ashu-gif10/BinBrain-AI-Waste-Management.git",
+      "thumbnailAsset": "/images/project_lab/matched/binbrain_ai.png",
+      "featured": true
+    },
+    {
+      "id": "student-management-system",
+      "title": "Student Management System",
+      "tagline": "Python & Flask Web-Based Academic Records Manager",
+      "description": "Student Management System is a web-based application developed using Python and Flask. It helps administrators add, search, update, delete, and view student records through a simple and user-friendly dashboard. It provides an easy way to manage student information online.",
+      "category": "Web Development",
+      "contributors": ["Nilesh Kumar"],
+      "contributorIds": ["nilesh-kumar"],
+      "isCollaborative": false,
+      "workingUrl": "https://8756756771NY.pythonanywhere.com/",
+      "githubUrl": "",
+      "thumbnailAsset": "/images/project_lab/matched/student_management.png",
+      "featured": false,
+      "attributionNotes": "No PowerPoint slide poster found; live web login captured from verified working application."
+    },
+    {
+      "id": "drishti-ai",
+      "title": "Drishti AI – Eyes for the Blind",
+      "tagline": "Voice-Guided Vision Assistance for the Visually Impaired",
+      "description": "Drishti AI is a fully voice-controlled, intelligent assistive web application. By using cutting-edge Vision-Language models (Google Gemini) and native browser speech synthesis/recognition, Drishti AI allows visually impaired users to analyze surroundings, read books and signs via OCR, recognize and calculate Indian Rupee currency values, locate items directional guidance, and navigate entirely hands-free via voice commands.",
+      "category": "AI Projects",
+      "contributors": ["Juhi Pawar"],
+      "contributorIds": ["juhi-pawar"],
+      "isCollaborative": false,
+      "workingUrl": "https://drishti-delta-five.vercel.app/",
+      "githubUrl": "",
+      "thumbnailAsset": "/images/project_lab/matched/drishti_ai.jpeg",
+      "featured": true,
+      "attributionNotes": "Spreadsheet submitted by Juhi Pawar; PowerPoint artwork credits 'Drishti Team'. Flagged for administrator review."
+    }
+  ],
+  "students": [
+    {
+      "id": "raushan-kumar",
+      "name": "Raushan Kumar",
+      "email": "kraushan48084@gmail.com",
+      "avatarInitials": "RK",
+      "projectIds": ["spendwise"],
+      "tagline": "Full-Stack Developer & Fintech Builder"
+    },
+    {
+      "id": "vishal-maurya",
+      "name": "Vishal Maurya",
+      "email": "vishalmaurya1390@gmail.com",
+      "avatarInitials": "VM",
+      "projectIds": ["pmi-ai"],
+      "tagline": "AI Engineer & Cinema Tech Specialist"
+    },
+    {
+      "id": "sakshi-ahirwar",
+      "name": "Sakshi Ahirwar",
+      "email": "ahirwarsakshi545@gmail.com",
+      "avatarInitials": "SA",
+      "projectIds": ["cybersafe-portal", "smart-notice-board"],
+      "tagline": "Cybersecurity & Campus Systems Developer"
+    },
+    {
+      "id": "syed-faizan-ali",
+      "name": "Syed Faizan Ali",
+      "email": "faizanzafarali385@gmail.com",
+      "avatarInitials": "FA",
+      "projectIds": ["pixelme-faizan", "particles-ai"],
+      "tagline": "Creative Technologist & 3D Web Architect"
+    },
+    {
+      "id": "soumya-yadav",
+      "name": "Soumya Yadav",
+      "email": "s60724215@gmail.com",
+      "avatarInitials": "SY",
+      "projectIds": ["spendwise"],
+      "tagline": "Product Designer & Frontend Engineer"
+    },
+    {
+      "id": "dimpy-rai",
+      "name": "Dimpy Rai",
+      "email": "yr15050008@gmail.com",
+      "avatarInitials": "DR",
+      "projectIds": ["dimpy-cosmos"],
+      "tagline": "Creative Web Developer & Space Explorer"
+    },
+    {
+      "id": "ashu-patel",
+      "name": "Ashu Patel",
+      "email": "ashup1240@gmail.com",
+      "avatarInitials": "AP",
+      "projectIds": ["music-royalty-vault", "binbrain-ai"],
+      "tagline": "Blockchain & Machine Learning Engineer"
+    },
+    {
+      "id": "nilesh-kumar",
+      "name": "Nilesh Kumar",
+      "email": "nileshkumar20032005@gmail.com",
+      "avatarInitials": "NK",
+      "projectIds": ["student-management-system"],
+      "tagline": "Python & Flask Systems Developer"
+    },
+    {
+      "id": "juhi-pawar",
+      "name": "Juhi Pawar",
+      "email": "juhipawar2323@gmail.com",
+      "avatarInitials": "JP",
+      "projectIds": ["drishti-ai"],
+      "tagline": "AI Assistive Tech Innovator"
+    }
+  ]
+}

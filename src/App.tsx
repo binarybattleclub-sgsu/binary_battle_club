@@ -33,7 +33,7 @@ export const AppContent: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
   return (
-    <div className="min-h-screen bg-[#080D18] text-[#DCE6F5] flex flex-col font-sans selection:bg-[#2563EB] selection:text-[#DCE6F5] relative">
+    <div className="min-h-screen bg-[#080D18] text-[#DCE6F5] flex flex-col font-sans selection:bg-[#2563EB] selection:text-[#DCE6F5] relative overflow-x-hidden">
       <ScrollToTop />
 
       {/* Fixed Left Sidebar */}
@@ -46,7 +46,7 @@ export const AppContent: React.FC = () => {
 
       {/* Main Content Area */}
       <div
-        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+        className={`flex-1 min-w-0 flex flex-col transition-all duration-300 ease-in-out ${
           collapsed ? 'lg:pl-20' : 'lg:pl-64'
         }`}
       >
@@ -57,7 +57,7 @@ export const AppContent: React.FC = () => {
         />
 
         {/* Page Inner Container */}
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <main className="flex-1 min-w-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
@@ -65,6 +65,11 @@ export const AppContent: React.FC = () => {
             <Route path="/explore-technologies" element={<ExploreTechnologies />} />
             <Route path="/code-compete" element={<CodeAndCompete />} />
             <Route path="/innovate-build" element={<InnovateAndBuild />} />
+            <Route path="/innovate-build/student/:studentId" element={<InnovateAndBuild />} />
+            <Route path="/innovate-build/project/:projectId" element={<InnovateAndBuild />} />
+            <Route path="/create-showcase" element={<InnovateAndBuild />} />
+            <Route path="/create-showcase/student/:studentId" element={<InnovateAndBuild />} />
+            <Route path="/create-showcase/project/:projectId" element={<InnovateAndBuild />} />
             <Route path="/hackathons" element={<Hackathons />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/join-community" element={<JoinCommunity />} />

@@ -19,6 +19,7 @@
     scroll-behavior: smooth;
     color-scheme: dark;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
   }
 
   body {
@@ -32,6 +33,8 @@
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   *, ::before, ::after {
