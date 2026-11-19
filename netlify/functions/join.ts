@@ -127,12 +127,18 @@ export const handler = async (event: any) => {
       data: [
         {
           'Name': fullName,
+          'Full Name': fullName,
           'University Email': email,
+          'Email': email,
           'Enrollment Number': studentId,
+          'Student ID / Enrollment Number': studentId,
           'Department': schoolDepartment,
+          'School / Department': schoolDepartment,
           'Current Semester': semester,
           'Notes': reasonToJoin,
+          'Why do you want to join Binary Battle Club?': reasonToJoin,
           'Application Date': formattedDate,
+          'Timestamp': formattedDate,
           'Application Status': 'Pending',
         },
       ],
