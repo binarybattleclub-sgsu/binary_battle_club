@@ -105,7 +105,7 @@ export const handler = async (event: any) => {
     }
 
     const sheetDbBaseUrl =
-      process.env.SHEETDB_API_URL || 'https://sheetdb.io/api/v1/9plr44lrtzu9u';
+      process.env.SHEETDB_API_URL || 'https://sheetdb.io/api/v1/l9o1tgz8oojky';
     const targetTab = process.env.SHEETDB_TARGET_TAB || 'Applied Members';
     const bearerToken = process.env.SHEETDB_BEARER_TOKEN || '';
 
@@ -121,27 +121,35 @@ export const handler = async (event: any) => {
       hour12: false,
     }).replace(/[/]/g, '-');
 
-    const sheetDbUrl = `${sheetDbBaseUrl.replace(/\/+$/, '')}?sheet=${encodeURIComponent(targetTab)}`;
+    const recordPayload = {
+      'Timestamp': formattedDate,
+      'Full Name': fullName,
+      'University Email': email,
+      'Student ID / Enrollment Number': studentId,
+      'School / Department': schoolDepartment,
+      'Current Semester': semester,
+      'Motivation': reasonToJoin,
+
+      // Tolerant mapping for current Google Sheet headers
+      'Timestamp        ': formattedDate,
+      '   Full Name  ': fullName,
+      '  University Email    ': email,
+      '    Student ID / Enrollment Number    ': studentId,
+      ' Current Semeste': semester,
+
+      // Legacy aliases
+      'Name': fullName,
+      'Email': email,
+      'Enrollment Number': studentId,
+      'Department': schoolDepartment,
+      'Notes': reasonToJoin,
+      'Why do you want to join Binary Battle Club?': reasonToJoin,
+      'Application Date': formattedDate,
+      'Application Status': 'Pending',
+    };
 
     const sheetDbPayload = {
-      data: [
-        {
-          'Name': fullName,
-          'Full Name': fullName,
-          'University Email': email,
-          'Email': email,
-          'Enrollment Number': studentId,
-          'Student ID / Enrollment Number': studentId,
-          'Department': schoolDepartment,
-          'School / Department': schoolDepartment,
-          'Current Semester': semester,
-          'Notes': reasonToJoin,
-          'Why do you want to join Binary Battle Club?': reasonToJoin,
-          'Application Date': formattedDate,
-          'Timestamp': formattedDate,
-          'Application Status': 'Pending',
-        },
-      ],
+      data: [recordPayload],
       return_values: true,
     };
 
@@ -154,14 +162,26 @@ export const handler = async (event: any) => {
       headers['Authorization'] = `Bearer ${bearerToken.trim()}`;
     }
 
-    const response = await fetch(sheetDbUrl, {
+    let sheetDbUrl = `${sheetDbBaseUrl.replace(/\/+$/, '')}?sheet=${encodeURIComponent(targetTab)}`;
+    let response = await fetch(sheetDbUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(sheetDbPayload),
     });
 
-    const resStatus = response.status;
-    const resText = await response.text();
+    let resStatus = response.status;
+    let resText = await response.text();
+
+    if (resStatus === 404 || resText.includes('Sheet not found')) {
+      sheetDbUrl = sheetDbBaseUrl.replace(/\/+$/, '');
+      response = await fetch(sheetDbUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(sheetDbPayload),
+      });
+      resStatus = response.status;
+      resText = await response.text();
+    }
 
     if (resStatus === 201 || resStatus === 200) {
       return {

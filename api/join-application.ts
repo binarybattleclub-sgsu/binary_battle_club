@@ -115,7 +115,7 @@ export default async function handler(req: any, res: any) {
 
     // 4. Retrieve SheetDB Configuration from Server Environment
     const sheetDbBaseUrl =
-      process.env.SHEETDB_API_URL || 'https://sheetdb.io/api/v1/9plr44lrtzu9u';
+      process.env.SHEETDB_API_URL || 'https://sheetdb.io/api/v1/l9o1tgz8oojky';
     const targetTab = process.env.SHEETDB_TARGET_TAB || 'Applied Members';
     const bearerToken = process.env.SHEETDB_BEARER_TOKEN || '';
 
@@ -133,27 +133,37 @@ export default async function handler(req: any, res: any) {
     }).replace(/[/]/g, '-');
 
     // Prepare SheetDB POST payload matching verified spreadsheet column headers
-    const sheetDbUrl = `${sheetDbBaseUrl.replace(/\/+$/, '')}?sheet=${encodeURIComponent(targetTab)}`;
+    // Includes both clean keys and current spreadsheet keys (spaces/typo tolerant)
+    const recordPayload = {
+      // Clean target columns
+      'Timestamp': formattedDate,
+      'Full Name': fullName,
+      'University Email': email,
+      'Student ID / Enrollment Number': studentId,
+      'School / Department': schoolDepartment,
+      'Current Semester': semester,
+      'Motivation': reasonToJoin,
+
+      // Tolerant mapping for current Google Sheet headers (with trailing/leading spaces or typos)
+      'Timestamp        ': formattedDate,
+      '   Full Name  ': fullName,
+      '  University Email    ': email,
+      '    Student ID / Enrollment Number    ': studentId,
+      ' Current Semeste': semester,
+
+      // Legacy aliases
+      'Name': fullName,
+      'Email': email,
+      'Enrollment Number': studentId,
+      'Department': schoolDepartment,
+      'Notes': reasonToJoin,
+      'Why do you want to join Binary Battle Club?': reasonToJoin,
+      'Application Date': formattedDate,
+      'Application Status': 'Pending',
+    };
 
     const sheetDbPayload = {
-      data: [
-        {
-          'Name': fullName,
-          'Full Name': fullName,
-          'University Email': email,
-          'Email': email,
-          'Enrollment Number': studentId,
-          'Student ID / Enrollment Number': studentId,
-          'Department': schoolDepartment,
-          'School / Department': schoolDepartment,
-          'Current Semester': semester,
-          'Notes': reasonToJoin,
-          'Why do you want to join Binary Battle Club?': reasonToJoin,
-          'Application Date': formattedDate,
-          'Timestamp': formattedDate,
-          'Application Status': 'Pending',
-        },
-      ],
+      data: [recordPayload],
       return_values: true,
     };
 
@@ -167,14 +177,28 @@ export default async function handler(req: any, res: any) {
     }
 
     // 5. Execute SheetDB Create API
-    const sheetDbResponse = await fetch(sheetDbUrl, {
+    // Attempt with ?sheet=Applied%20Members first; fallback to root if SheetDB cached 'Sheet1'
+    let sheetDbUrl = `${sheetDbBaseUrl.replace(/\/+$/, '')}?sheet=${encodeURIComponent(targetTab)}`;
+    let sheetDbResponse = await fetch(sheetDbUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(sheetDbPayload),
     });
 
-    const responseStatus = sheetDbResponse.status;
-    const responseText = await sheetDbResponse.text();
+    let responseStatus = sheetDbResponse.status;
+    let responseText = await sheetDbResponse.text();
+
+    if (responseStatus === 404 || responseText.includes('Sheet not found')) {
+      console.warn(`[API /api/join-application] Tab "${targetTab}" not recognized by SheetDB cache. Retrying default first sheet...`);
+      sheetDbUrl = sheetDbBaseUrl.replace(/\/+$/, '');
+      sheetDbResponse = await fetch(sheetDbUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(sheetDbPayload),
+      });
+      responseStatus = sheetDbResponse.status;
+      responseText = await sheetDbResponse.text();
+    }
 
     let responseData: any = null;
     try {
@@ -196,6 +220,15 @@ export default async function handler(req: any, res: any) {
     // 7. Investigate & handle SheetDB error
     console.error(`[API /api/join-application] SheetDB HTTP ${responseStatus}:`, responseText);
 
+    if (responseStatus === 401 || responseText.includes('permission')) {
+      return res.status(401).json({
+        success: false,
+        error:
+          'Google Spreadsheet Permission Error: SheetDB was denied write access. Please set the Google Spreadsheet sharing settings to "Editor" for Anyone with the link, or verify CREATE permission in your SheetDB dashboard.',
+        detail: responseData?.error || responseText,
+      });
+    }
+
     const isEmptyHeaderError =
       typeof responseText === 'string' &&
       responseText.toLowerCase().includes('spreadsheet is empty');
@@ -204,7 +237,7 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({
         success: false,
         error:
-          'Spreadsheet structure error: Row 1 of "Applied Members" does not contain table column headers. SheetDB requires column headers in Row 1 (A1: Sno., B1: Name, C1: University Email, etc.). Please move column headers to Row 1.',
+          'Spreadsheet structure error: Row 1 of "Applied Members" does not contain table column headers. SheetDB requires column headers in Row 1. Please place column headers in Row 1.',
         detail: responseData?.error || responseText,
       });
     }

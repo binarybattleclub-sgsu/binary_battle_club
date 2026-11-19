@@ -82,31 +82,39 @@ export default defineConfig(({ mode }) => {
 
                 // 4. Try SheetDB Create API
                 const sheetDbBaseUrl =
-                  process.env.SHEETDB_API_URL || env.SHEETDB_API_URL || 'https://sheetdb.io/api/v1/9plr44lrtzu9u';
+                  process.env.SHEETDB_API_URL || env.SHEETDB_API_URL || 'https://sheetdb.io/api/v1/l9o1tgz8oojky';
                 const targetTab = process.env.SHEETDB_TARGET_TAB || env.SHEETDB_TARGET_TAB || 'Applied Members';
                 const bearerToken = process.env.SHEETDB_BEARER_TOKEN || env.SHEETDB_BEARER_TOKEN || '';
 
-                const sheetDbUrl = `${sheetDbBaseUrl.replace(/\/+$/, '')}?sheet=${encodeURIComponent(targetTab)}`;
+                const recordPayload = {
+                  'Timestamp': formattedDate,
+                  'Full Name': fullName,
+                  'University Email': email,
+                  'Student ID / Enrollment Number': studentId,
+                  'School / Department': schoolDepartment,
+                  'Current Semester': semester,
+                  'Motivation': reasonToJoin,
+
+                  // Tolerant mapping for current Google Sheet headers (with trailing/leading spaces or typos)
+                  'Timestamp        ': formattedDate,
+                  '   Full Name  ': fullName,
+                  '  University Email    ': email,
+                  '    Student ID / Enrollment Number    ': studentId,
+                  ' Current Semeste': semester,
+
+                  // Legacy aliases
+                  'Name': fullName,
+                  'Email': email,
+                  'Enrollment Number': studentId,
+                  'Department': schoolDepartment,
+                  'Notes': reasonToJoin,
+                  'Why do you want to join Binary Battle Club?': reasonToJoin,
+                  'Application Date': formattedDate,
+                  'Application Status': 'Pending',
+                };
 
                 const sheetDbPayload = {
-                  data: [
-                    {
-                      'Name': fullName,
-                      'Full Name': fullName,
-                      'University Email': email,
-                      'Email': email,
-                      'Enrollment Number': studentId,
-                      'Student ID / Enrollment Number': studentId,
-                      'Department': schoolDepartment,
-                      'School / Department': schoolDepartment,
-                      'Current Semester': semester,
-                      'Notes': reasonToJoin,
-                      'Why do you want to join Binary Battle Club?': reasonToJoin,
-                      'Application Date': formattedDate,
-                      'Timestamp': formattedDate,
-                      'Application Status': 'Pending',
-                    },
-                  ],
+                  data: [recordPayload],
                   return_values: true,
                 };
 
@@ -118,13 +126,25 @@ export default defineConfig(({ mode }) => {
                   headers['Authorization'] = `Bearer ${bearerToken.trim()}`;
                 }
 
-                const sheetDbRes = await fetch(sheetDbUrl, {
+                let sheetDbUrl = `${sheetDbBaseUrl.replace(/\/+$/, '')}?sheet=${encodeURIComponent(targetTab)}`;
+                let sheetDbRes = await fetch(sheetDbUrl, {
                   method: 'POST',
                   headers,
                   body: JSON.stringify(sheetDbPayload),
                 });
 
-                const sheetDbText = await sheetDbRes.text();
+                let sheetDbText = await sheetDbRes.text();
+
+                if (sheetDbRes.status === 404 || sheetDbText.includes('Sheet not found')) {
+                  sheetDbUrl = sheetDbBaseUrl.replace(/\/+$/, '');
+                  sheetDbRes = await fetch(sheetDbUrl, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(sheetDbPayload),
+                  });
+                  sheetDbText = await sheetDbRes.text();
+                }
+
                 let sheetDbJson: any = null;
                 try {
                   sheetDbJson = JSON.parse(sheetDbText);
@@ -138,6 +158,18 @@ export default defineConfig(({ mode }) => {
                     message: 'Application recorded successfully in Google Sheets via SheetDB.',
                     timestamp: formattedDate,
                     method: 'SheetDB',
+                  }));
+                  return;
+                }
+
+                if (sheetDbRes.status === 401 || sheetDbText.includes('permission')) {
+                  res.statusCode = 401;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({
+                    success: false,
+                    error:
+                      'Google Spreadsheet Permission Error: SheetDB was denied write access. Please set the Google Spreadsheet sharing settings to "Editor" for Anyone with the link, or verify CREATE permission in your SheetDB dashboard.',
+                    detail: sheetDbText,
                   }));
                   return;
                 }
