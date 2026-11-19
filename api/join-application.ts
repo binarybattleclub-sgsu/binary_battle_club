@@ -196,48 +196,15 @@ export default async function handler(req: any, res: any) {
     // 7. Investigate & handle SheetDB error
     console.error(`[API /api/join-application] SheetDB HTTP ${responseStatus}:`, responseText);
 
-    // If SheetDB fails due to empty Row 1 header requirement
     const isEmptyHeaderError =
       typeof responseText === 'string' &&
       responseText.toLowerCase().includes('spreadsheet is empty');
 
-    // Fallback to Google Apps Script webhook if configured and SheetDB is technically blocked
-    const appsScriptUrl = process.env.GOOGLE_APPS_SCRIPT_URL;
-    if (isEmptyHeaderError && appsScriptUrl && appsScriptUrl.startsWith('http')) {
-      console.warn('[API /api/join-application] SheetDB blocked by empty Row 1 header. Executing technical fallback via Google Apps Script...');
-      
-      const gasResponse = await fetch(appsScriptUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName,
-          email,
-          studentId,
-          schoolDepartment,
-          semester,
-          reasonToJoin,
-          authToken: process.env.GOOGLE_APPS_SCRIPT_SECRET || '',
-        }),
-        redirect: 'follow',
-      });
-
-      const gasData = await gasResponse.json();
-      if (gasData.status === 'success') {
-        return res.status(200).json({
-          success: true,
-          message: 'Application recorded successfully in Applied Members tab.',
-          timestamp: gasData.timestamp || formattedDate,
-          method: 'Google Apps Script (Dashboard Preserved)',
-        });
-      }
-    }
-
-    // If SheetDB returned an error and no fallback succeeded
     if (isEmptyHeaderError) {
       return res.status(400).json({
         success: false,
         error:
-          'Spreadsheet structure error: Row 1 of "Applied Members" is empty. SheetDB requires column headers in Row 1. Please move table headers from Row 10 to Row 1, or deploy the Google Apps Script webhook.',
+          'Spreadsheet structure error: Row 1 of "Applied Members" does not contain table column headers. SheetDB requires column headers in Row 1 (A1: Sno., B1: Name, C1: University Email, etc.). Please move column headers to Row 1.',
         detail: responseData?.error || responseText,
       });
     }

@@ -144,37 +144,6 @@ export default defineConfig(({ mode }) => {
 
                 // If SheetDB fails due to empty Row 1 in sheet
                 const isEmptyHeader = typeof sheetDbText === 'string' && sheetDbText.includes('Spreadsheet is empty');
-                const appsScriptUrl = process.env.GOOGLE_APPS_SCRIPT_URL || env.GOOGLE_APPS_SCRIPT_URL;
-
-                // Technical fallback if SheetDB is blocked by sheet layout
-                if (isEmptyHeader && appsScriptUrl && appsScriptUrl.startsWith('http')) {
-                  const gasRes = await fetch(appsScriptUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      fullName,
-                      email,
-                      studentId,
-                      schoolDepartment,
-                      semester,
-                      reasonToJoin,
-                      authToken: process.env.GOOGLE_APPS_SCRIPT_SECRET || env.GOOGLE_APPS_SCRIPT_SECRET || '',
-                    }),
-                    redirect: 'follow',
-                  });
-                  const gasJson = await gasRes.json();
-                  if (gasJson.status === 'success') {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify({
-                      success: true,
-                      message: 'Application recorded successfully in Applied Members tab.',
-                      timestamp: gasJson.timestamp || formattedDate,
-                      method: 'Google Apps Script (Dashboard Preserved)',
-                    }));
-                    return;
-                  }
-                }
 
                 if (isEmptyHeader) {
                   res.statusCode = 400;
@@ -182,7 +151,7 @@ export default defineConfig(({ mode }) => {
                   res.end(JSON.stringify({
                     success: false,
                     error:
-                      'SheetDB Error: Row 1 of "Applied Members" is empty. SheetDB requires column headers in Row 1. Row 10 headers are not accessible by SheetDB until moved to Row 1.',
+                      'SheetDB Error: Row 1 of "Applied Members" does not contain table column headers. SheetDB requires column headers in Row 1 (A1: Sno., B1: Name, C1: University Email, etc.).',
                     detail: sheetDbText,
                   }));
                   return;
