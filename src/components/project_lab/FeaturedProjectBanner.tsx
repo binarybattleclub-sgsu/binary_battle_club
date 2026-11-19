@@ -5,9 +5,9 @@ import {
   ExternalLink,
   Users,
   Eye,
-  Sparkles,
   ArrowRight,
-  ShieldCheck,
+  Smartphone,
+  Lock,
 } from 'lucide-react';
 import { GithubIcon } from '../SocialIcons';
 import {
@@ -146,16 +146,18 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
     return null;
   }
 
-  const hasLiveDemo =
-    Boolean(currentProject.workingUrl &&
-    currentProject.workingUrl !== '#' &&
-    currentProject.workingUrl.startsWith('http') &&
-    currentProject.isValidWebUrl !== false);
+  const hasLiveDemo = Boolean(
+    currentProject.workingUrl &&
+      currentProject.workingUrl !== '#' &&
+      currentProject.workingUrl.startsWith('http') &&
+      currentProject.isValidWebUrl !== false
+  );
 
-  const hasGithub =
-    Boolean(currentProject.githubUrl &&
-    currentProject.githubUrl !== '#' &&
-    currentProject.githubUrl.startsWith('http'));
+  const hasGithub = Boolean(
+    currentProject.githubUrl &&
+      currentProject.githubUrl !== '#' &&
+      currentProject.githubUrl.startsWith('http')
+  );
 
   const formattedSlideNum = String(safeIndex + 1).padStart(2, '0');
   const formattedTotal = String(totalSlides).padStart(2, '0');
@@ -181,6 +183,8 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
     }
     return getStudentById(studentId);
   };
+
+  const ambientThumbnail = currentProject.thumbnailUrl || currentProject.thumbnailAsset;
 
   return (
     <section
@@ -220,10 +224,10 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
       >
         {/* Ambient Blurred Artwork Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {currentProject.thumbnailAsset && (
+          {ambientThumbnail && (
             <img
               key={`ambient-${currentProject.id}`}
-              src={currentProject.thumbnailAsset}
+              src={ambientThumbnail}
               alt=""
               aria-hidden="true"
               className="w-full h-full object-cover filter blur-3xl opacity-20 scale-125 transition-opacity duration-700"
@@ -342,17 +346,31 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
 
             {/* Bottom Actions Row */}
             <div className="pt-5 sm:pt-6 md:pt-8 flex flex-wrap items-center gap-2.5 sm:gap-3">
-              <button
-                type="button"
-                onClick={() => onSelectProject(currentProject)}
-                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-[#2563EB] hover:bg-[#1d4ed8] text-white font-mono text-xs sm:text-sm font-bold flex items-center gap-2 border border-[#38BDF8]/60 shadow-lg shadow-[#2563EB]/30 transition-all hover:scale-[1.02] cursor-pointer"
-              >
-                <Eye size={15} />
-                <span>Explore Project</span>
-                <ArrowRight size={14} className="ml-0.5" />
-              </button>
+              {/* Explore Project Action Button (Disabled if no public demo URL exists) */}
+              {hasLiveDemo ? (
+                <button
+                  type="button"
+                  onClick={() => onSelectProject(currentProject)}
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-[#2563EB] hover:bg-[#1d4ed8] text-white font-mono text-xs sm:text-sm font-bold flex items-center gap-2 border border-[#38BDF8]/60 shadow-lg shadow-[#2563EB]/30 transition-all hover:scale-[1.02] cursor-pointer"
+                >
+                  <Eye size={15} />
+                  <span>Explore Project</span>
+                  <ArrowRight size={14} className="ml-0.5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  title="Explore Project is disabled because no public demo URL was provided for this submission"
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-[#101D35] text-[#9FB0C8]/50 font-mono text-xs sm:text-sm font-bold flex items-center gap-2 border border-[#243650] cursor-not-allowed opacity-60 select-none"
+                >
+                  <Lock size={14} />
+                  <span>Explore Project</span>
+                </button>
+              )}
 
-              {hasLiveDemo && (
+              {/* Live Demo Button */}
+              {hasLiveDemo ? (
                 <a
                   href={currentProject.workingUrl}
                   target="_blank"
@@ -363,6 +381,13 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
                   <span>Live Demo</span>
                   <ExternalLink size={13} className="text-[#38BDF8]" />
                 </a>
+              ) : (
+                <span
+                  title="No public live demo URL available"
+                  className="px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-[#080D18]/50 border border-[#243650]/40 text-[#9FB0C8]/40 font-mono text-xs sm:text-sm flex items-center gap-1.5 cursor-not-allowed select-none"
+                >
+                  <span>Demo Unavailable</span>
+                </span>
               )}
 
               {currentProject.secondaryUrl && (
@@ -373,8 +398,8 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
                   className="px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-[#080D18]/90 hover:bg-[#172945] border border-[#243650] hover:border-[#38BDF8] text-[#DCE6F5] font-mono text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all shadow-sm"
                   title={currentProject.secondaryUrlLabel || 'Secondary Link'}
                 >
+                  <Smartphone size={14} className="text-[#38BDF8]" />
                   <span>{currentProject.secondaryUrlLabel || 'App'}</span>
-                  <ExternalLink size={13} className="text-[#38BDF8]" />
                 </a>
               )}
 
@@ -397,16 +422,18 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
             onClick={() => onSelectProject(currentProject)}
             className="md:col-span-6 relative p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center order-1 md:order-2 cursor-pointer"
           >
-            {/* Artwork Frame */}
+            {/* Artwork Frame: Centered navy background, rounded corners, subtle border */}
             <div className="relative w-full h-[220px] sm:h-[260px] md:h-[300px] lg:h-[380px] rounded-2xl overflow-hidden bg-[#080D18] border border-[#243650] shadow-2xl flex items-center justify-center group-hover:border-[#38BDF8]/50 transition-colors">
               <ProjectThumbnail
+                key={currentProject.id}
                 project={currentProject}
                 aspectRatio="h-full w-full"
-                imageClassName="object-contain md:object-cover group-hover:scale-[1.02]"
+                objectFit="contain"
+                imageClassName="p-2 sm:p-3"
               />
 
               {/* Hover inspect badge */}
-              <div className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg bg-[#080D18]/85 border border-[#243650] text-[#38BDF8] text-[11px] font-mono font-medium flex items-center gap-1.5 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg bg-[#080D18]/85 border border-[#243650] text-[#38BDF8] text-[11px] font-mono font-medium flex items-center gap-1.5 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity z-20">
                 <Eye size={12} />
                 <span>Click to view details</span>
               </div>
@@ -436,8 +463,8 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
             </button>
           </div>
 
-          {/* Clickable Progress Indicators */}
-          <div className="flex items-center gap-1.5 overflow-x-auto max-w-[60%] sm:max-w-none py-1">
+          {/* Clickable Progress Indicators (All 27 Unique Projects) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto max-w-[50%] sm:max-w-[70%] py-1">
             {projects.map((proj, idx) => {
               const isActive = idx === safeIndex;
               return (
@@ -446,9 +473,9 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
                   type="button"
                   onClick={() => goToSlide(idx)}
                   aria-label={`Jump to slide ${idx + 1}: ${proj.title}`}
-                  className={`transition-all duration-300 rounded-full cursor-pointer ${
+                  className={`transition-all duration-300 rounded-full cursor-pointer shrink-0 ${
                     isActive
-                      ? 'w-7 sm:w-8 h-2 bg-gradient-to-r from-[#38BDF8] to-[#2563EB] shadow-[0_0_10px_rgba(56,189,248,0.5)]'
+                      ? 'w-6 sm:w-7 h-2 bg-gradient-to-r from-[#38BDF8] to-[#2563EB] shadow-[0_0_10px_rgba(56,189,248,0.5)]'
                       : 'w-2 h-2 bg-[#243650] hover:bg-[#9FB0C8]/60'
                   }`}
                 />

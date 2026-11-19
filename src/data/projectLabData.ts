@@ -18,7 +18,10 @@ export interface ProjectLabItem {
   isCollaborative: boolean;
   workingUrl: string;
   githubUrl: string;
+  // Unified, consistent thumbnail properties
+  thumbnailUrl: string;
   thumbnailAsset: string;
+  originalThumbnail?: string;
   featured: boolean;
   attributionNotes?: string;
   // Extended dynamic fields
@@ -40,7 +43,15 @@ export interface StudentProfile {
   tagline: string;
 }
 
-export const PROJECTS: ProjectLabItem[] = projectDataJson.projects as unknown as ProjectLabItem[];
+// Map fallback bundled data ensuring both thumbnailUrl and thumbnailAsset exist
+const fallbackProjects: ProjectLabItem[] = (projectDataJson.projects as any[]).map((p) => ({
+  ...p,
+  thumbnailUrl: p.thumbnailUrl || p.thumbnailAsset || '',
+  thumbnailAsset: p.thumbnailUrl || p.thumbnailAsset || '',
+  featured: true,
+}));
+
+export const PROJECTS: ProjectLabItem[] = fallbackProjects;
 export const STUDENTS: StudentProfile[] = projectDataJson.students as unknown as StudentProfile[];
 
 /**
@@ -82,16 +93,19 @@ export function getProjectsForStudent(
   const student = getStudentById(studentId, studentList);
   if (!student) return [];
   return projectList.filter(
-    (p) => student.projectIds.includes(p.id) || p.contributorIds.includes(studentId)
+    (p) =>
+      student.projectIds.includes(p.id) ||
+      p.contributorIds.includes(studentId) ||
+      p.contributors.some((c) => c.toLowerCase() === student.name.toLowerCase())
   );
 }
 
 /**
- * Retrieves featured projects for the hero carousel/banner
+ * Retrieves featured projects for the hero carousel/banner.
+ * Per master specification, all verified unique projects are included in the banner slideshow.
  */
 export function getFeaturedProjects(projectList: ProjectLabItem[] = PROJECTS): ProjectLabItem[] {
-  const featured = projectList.filter((p) => p.featured);
-  return featured.length > 0 ? featured : projectList.slice(0, 5);
+  return projectList;
 }
 
 /**
@@ -116,7 +130,6 @@ export function getProjectLabStats(
  * instant localStorage cache hydration, and network failure resilience.
  */
 export function useProjectLabData() {
-  // Initialize with cached data if available, otherwise bundled snapshot
   const initialCache = getCachedProjectLabData();
   const [projects, setProjects] = useState<ProjectLabItem[]>(
     initialCache?.projects && initialCache.projects.length > 0

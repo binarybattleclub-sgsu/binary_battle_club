@@ -2,8 +2,8 @@ import { ProjectLabItem, StudentProfile } from '../data/projectLabData';
 import fallbackProjectData from '../data/project-data.json';
 
 export const SHEETDB_API_ENDPOINT = 'https://sheetdb.io/api/v1/ja94zu4m36qlw';
-export const CACHE_STORAGE_KEY = 'bbc_project_lab_data_v2';
-export const CACHE_TIMESTAMP_KEY = 'bbc_project_lab_timestamp_v2';
+export const CACHE_STORAGE_KEY = 'bbc_project_lab_data_v3';
+export const CACHE_TIMESTAMP_KEY = 'bbc_project_lab_timestamp_v3';
 export const SYNC_INTERVAL_MS = 60000; // 60 seconds
 
 // Known matched local assets for verified projects
@@ -27,7 +27,6 @@ const LOCAL_ASSET_MAP: Record<string, string> = {
   'student-management-system': '/images/project_lab/matched/student_management.png',
 };
 
-// URL to local asset mapping
 const URL_ASSET_MAP: Record<string, string> = {
   'https://spend-wise-neon.vercel.app': '/images/project_lab/matched/spendwise.png',
   'https://magenta-flan-77eae8.netlify.app': '/images/project_lab/matched/spendwise.png',
@@ -77,7 +76,6 @@ export function toTitleCase(name: string): string {
  */
 export function parseContributors(cellValue: string): string[] {
   if (!cellValue) return [];
-  // Split on delimiters
   const rawParts = cellValue.split(/\s+(?:and|&|\+)\s+|,/i);
   const contributors: string[] = [];
   for (const part of rawParts) {
@@ -153,7 +151,6 @@ export function normalizeCanonicalUrl(url: string): string {
       'si',
     ]);
 
-    // Filter search params
     const cleanParams = new URLSearchParams();
     parsed.searchParams.forEach((val, key) => {
       if (!trackingParams.has(key.toLowerCase())) {
@@ -161,13 +158,11 @@ export function normalizeCanonicalUrl(url: string): string {
       }
     });
 
-    // Remove trailing slash from pathname
     let pathname = parsed.pathname;
     if (pathname.length > 1 && pathname.endsWith('/')) {
       pathname = pathname.slice(0, -1);
     }
 
-    // Clean .git from GitHub URLs
     if (parsed.hostname.toLowerCase().includes('github.com') && pathname.endsWith('.git')) {
       pathname = pathname.slice(0, -4);
     }
@@ -181,28 +176,37 @@ export function normalizeCanonicalUrl(url: string): string {
 }
 
 /**
- * Converts Google Drive share URL to direct CDN image URL
+ * Reliable Google Drive URL normalizer.
+ * Extracts the file ID and converts supported image links into browser-displayable thumbnail URLs:
+ * https://drive.google.com/thumbnail?id=FILE_ID&sz=w1600
+ * Preserves ordinary HTTPS image URLs without modifying them.
  */
-export function formatDriveThumbnailUrl(driveUrl: string): string {
-  if (!driveUrl) return '';
-  const trimmed = driveUrl.trim();
+export function normalizeThumbnailUrl(rawUrl: string): string {
+  if (!rawUrl) return '';
+  const trimmed = rawUrl.trim();
 
-  // Extract ID from Google Drive links:
+  // If ordinary HTTPS image URL that is not Google Drive, preserve directly
+  if (!trimmed.includes('drive.google.com') && !trimmed.includes('docs.google.com')) {
+    return trimmed;
+  }
+
+  // Extract File ID from various Google Drive sharing formats:
   // e.g. https://drive.google.com/open?id=FILE_ID
   // e.g. https://drive.google.com/file/d/FILE_ID/view
+  // e.g. https://drive.google.com/uc?id=FILE_ID
   let fileId = '';
-  const idParamMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (idParamMatch && idParamMatch[1]) {
-    fileId = idParamMatch[1];
+  const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (idMatch && idMatch[1]) {
+    fileId = idMatch[1];
   } else {
-    const fileDMatch = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
-    if (fileDMatch && fileDMatch[1]) {
-      fileId = fileDMatch[1];
+    const dMatch = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (dMatch && dMatch[1]) {
+      fileId = dMatch[1];
     }
   }
 
   if (fileId) {
-    return `https://lh3.googleusercontent.com/d/${fileId}`;
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
   }
 
   return trimmed;
@@ -246,7 +250,7 @@ export function inferProjectCategory(title: string, desc: string, url: string): 
 }
 
 /**
- * Derives a catchy, professional tagline for a project
+ * Derives a professional tagline for a project
  */
 export function deriveProjectTagline(title: string, category: string, desc: string): string {
   if (desc && desc.length > 10 && desc.length <= 70) {
@@ -329,13 +333,16 @@ export function processSpreadsheetRecords(rawRows: RawSheetRow[]): {
     const secondaryUrl = extractedUrls.length > 1 ? extractedUrls[1] : undefined;
     const canonical = normalizeCanonicalUrl(primaryUrl);
 
-    // Dedup key: prefer canonical URL; if no URL, use slugged project title
+    // Dedup key: prefer canonical URL; if no URL, use deterministic slugged title
     const dedupeKey = canonical || `title:${makeSlug(row.projectName)}`;
 
     // 2. Parse contributors
     const contributors = parseContributors(row.studentName);
 
-    // 3. Check for existing project
+    // 3. Normalized thumbnail URL
+    const normalizedThumb = normalizeThumbnailUrl(row.thumbnail);
+
+    // 4. Check for existing project to merge
     if (projectsByCanonicalUrl.has(dedupeKey)) {
       const existing = projectsByCanonicalUrl.get(dedupeKey)!;
 
@@ -370,8 +377,10 @@ export function processSpreadsheetRecords(rawRows: RawSheetRow[]): {
       }
 
       // Keep thumbnail if previously missing
-      if (!existing.thumbnailAsset && row.thumbnail) {
-        existing.thumbnailAsset = formatDriveThumbnailUrl(row.thumbnail);
+      if (!existing.thumbnailUrl && normalizedThumb) {
+        existing.thumbnailUrl = normalizedThumb;
+        existing.thumbnailAsset = normalizedThumb;
+        existing.originalThumbnail = row.thumbnail;
       }
 
       // Keep alternate title if different
@@ -400,22 +409,14 @@ export function processSpreadsheetRecords(rawRows: RawSheetRow[]): {
       const isWebUrl = primaryUrl.startsWith('http://') || primaryUrl.startsWith('https://');
       const isGithub = primaryUrl.toLowerCase().includes('github.com');
 
-      // Check local asset map first, then drive thumbnail
-      let thumbnailAsset = '';
+      // Check local asset fallback if available
       const localMatched = LOCAL_ASSET_MAP[baseSlug] || URL_ASSET_MAP[canonical];
-      if (localMatched) {
-        thumbnailAsset = localMatched;
-      } else if (row.thumbnail) {
-        thumbnailAsset = formatDriveThumbnailUrl(row.thumbnail);
-      }
+      const finalThumb = normalizedThumb || localMatched || '';
 
-      // Tagline
       const tagline = deriveProjectTagline(row.projectName, category, row.description);
-
       const contributorIds = contributors.map((c) => makeSlug(c));
       const isCollaborative = contributors.length > 1;
 
-      // Special handling for AEGIS: label secondary URL if exists
       let secondaryLabel: string | undefined = undefined;
       if (secondaryUrl) {
         if (secondaryUrl.includes('app.html')) {
@@ -424,18 +425,6 @@ export function processSpreadsheetRecords(rawRows: RawSheetRow[]): {
           secondaryLabel = 'Live Application';
         }
       }
-
-      // Featured selection for banner: high-impact showcase projects
-      const isFeatured = [
-        'spendwise',
-        'pmi-ai',
-        'cybersafe-portal',
-        'aegis',
-        'dimpy-s-cosmos',
-        'binbrain-ai',
-        'music-royalty-vault',
-        'drishti-ai',
-      ].some((slug) => baseSlug.includes(slug) || row.projectName.toLowerCase().includes(slug));
 
       const newProject: ProjectLabItem = {
         id: baseSlug,
@@ -453,8 +442,10 @@ export function processSpreadsheetRecords(rawRows: RawSheetRow[]): {
         allUrls: extractedUrls,
         secondaryUrl,
         secondaryUrlLabel: secondaryLabel,
-        thumbnailAsset,
-        featured: isFeatured,
+        thumbnailUrl: finalThumb,
+        thumbnailAsset: finalThumb, // alias for full compatibility
+        originalThumbnail: row.thumbnail,
+        featured: true, // All 27 unique projects are included in the slideshow
         isValidWebUrl: isWebUrl,
         submissionCount: 1,
         timestamp: row.timestamp,
@@ -465,6 +456,21 @@ export function processSpreadsheetRecords(rawRows: RawSheetRow[]): {
   });
 
   const projects = Array.from(projectsByCanonicalUrl.values());
+
+  // Development diagnostics logging
+  if (typeof window !== 'undefined' && (window as any).__DEV_BBC__) {
+    console.groupCollapsed(`[ProjectLab Diagnostics] ${projects.length} Unique Projects Loaded`);
+    projects.forEach((p, idx) => {
+      console.debug(`${idx + 1}. [${p.id}] ${p.title}`, {
+        contributors: p.contributors,
+        originalThumbnail: p.originalThumbnail,
+        thumbnailUrl: p.thumbnailUrl,
+        isValidWebUrl: p.isValidWebUrl,
+        workingUrl: p.workingUrl,
+      });
+    });
+    console.groupEnd();
+  }
 
   // Generate dynamic student profiles from contributors
   const studentMap: Map<string, StudentProfile> = new Map();
@@ -514,12 +520,13 @@ export function processSpreadsheetRecords(rawRows: RawSheetRow[]): {
     }
   });
 
-  // Sort students by project count descending, then alphabetical
   const students = Array.from(studentMap.values()).sort((a, b) => {
-    if (b.projectIds.length !== a.projectIds.length) {
-      return b.projectIds.length - a.projectIds.length;
-    }
-    return a.name.localeCompare(b.name);
+    const nameA = a.name.trim().replace(/\s+/g, ' ');
+    const nameB = b.name.trim().replace(/\s+/g, ' ');
+    return (
+      nameA.localeCompare(nameB, undefined, { sensitivity: 'base', numeric: true }) ||
+      nameA.localeCompare(nameB)
+    );
   });
 
   return { projects, students };
@@ -533,13 +540,21 @@ export function getCachedProjectLabData(): {
   students: StudentProfile[];
   timestamp: number | null;
 } | null {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return null;
+  }
   try {
     const rawData = localStorage.getItem(CACHE_STORAGE_KEY);
     const rawTime = localStorage.getItem(CACHE_TIMESTAMP_KEY);
     if (rawData) {
       const parsed = JSON.parse(rawData);
       return {
-        projects: parsed.projects || [],
+        projects: (parsed.projects || []).map((p: any) => ({
+          ...p,
+          thumbnailUrl: p.thumbnailUrl || p.thumbnailAsset || '',
+          thumbnailAsset: p.thumbnailUrl || p.thumbnailAsset || '',
+          featured: true,
+        })),
         students: parsed.students || [],
         timestamp: rawTime ? parseInt(rawTime, 10) : null,
       };
@@ -557,6 +572,9 @@ export function saveProjectLabDataToCache(
   projects: ProjectLabItem[],
   students: StudentProfile[]
 ): void {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return;
+  }
   try {
     localStorage.setItem(
       CACHE_STORAGE_KEY,
@@ -617,7 +635,12 @@ export function getBundledFallbackData(): {
   students: StudentProfile[];
 } {
   return {
-    projects: fallbackProjectData.projects as unknown as ProjectLabItem[],
+    projects: (fallbackProjectData.projects as any[]).map((p) => ({
+      ...p,
+      thumbnailUrl: p.thumbnailUrl || p.thumbnailAsset || '',
+      thumbnailAsset: p.thumbnailUrl || p.thumbnailAsset || '',
+      featured: true,
+    })),
     students: fallbackProjectData.students as unknown as StudentProfile[],
   };
 }

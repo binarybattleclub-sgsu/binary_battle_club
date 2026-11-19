@@ -198,7 +198,7 @@ export const InnovateAndBuild: React.FC = () => {
 
           {/* SECTION B: LARGE CINEMATIC FEATURED PROJECTS BANNER SLIDESHOW */}
           <FeaturedProjectBanner
-            projects={featuredProjects}
+            projects={projects}
             students={students}
             onSelectProject={handleSelectProject}
             onSelectStudent={handleSelectStudent}
