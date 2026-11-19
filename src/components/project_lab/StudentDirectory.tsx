@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Users } from 'lucide-react';
 import {
   StudentProfile,
@@ -19,6 +19,23 @@ export const StudentDirectory: React.FC<StudentDirectoryProps> = ({
   projects = getAllProjects(),
   onSelectStudent,
 }) => {
+  // Sort student profile cards alphabetically by complete display name (A–Z)
+  const sortedStudents = useMemo(() => {
+    return [...students].sort((a, b) => {
+      // Normalize complete display name (trim whitespace, collapse extra spaces)
+      const nameA = (a.name || '').trim().replace(/\s+/g, ' ');
+      const nameB = (b.name || '').trim().replace(/\s+/g, ' ');
+
+      // Case-insensitive, locale-aware alphabetical comparison
+      return (
+        nameA.localeCompare(nameB, undefined, {
+          sensitivity: 'base',
+          numeric: true,
+        }) || nameA.localeCompare(nameB)
+      );
+    });
+  }, [students]);
+
   return (
     <section className="relative py-12 md:py-16">
       {/* Section Header */}
@@ -38,13 +55,13 @@ export const StudentDirectory: React.FC<StudentDirectoryProps> = ({
 
         <div className="flex items-center gap-2 text-xs font-mono text-[#9FB0C8] self-start md:self-auto bg-[#101D35] px-3.5 py-1.5 rounded-xl border border-[#243650]">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>{students.length} Verified Contributors</span>
+          <span>{sortedStudents.length} Verified Contributors</span>
         </div>
       </div>
 
       {/* 3-Column Responsive Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {students.map((student) => (
+        {sortedStudents.map((student) => (
           <StudentProfileCard
             key={student.id}
             student={student}
