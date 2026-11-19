@@ -1,9 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, X, Sparkles, FolderGit2, Users } from 'lucide-react';
-import { ProjectLabItem, StudentProfile, getAllProjects, getAllStudents } from '../../data/projectLabData';
+import {
+  ProjectLabItem,
+  StudentProfile,
+  getAllProjects,
+  getAllStudents,
+} from '../../data/projectLabData';
 import { ProjectLabCard } from './ProjectLabCard';
 
 interface ProjectGridProps {
+  projects?: ProjectLabItem[];
+  students?: StudentProfile[];
   onSelectProject: (project: ProjectLabItem) => void;
   onSelectStudent: (student: StudentProfile) => void;
   initialCategory?: string;
@@ -11,13 +18,15 @@ interface ProjectGridProps {
 }
 
 export const ProjectGrid: React.FC<ProjectGridProps> = ({
+  projects,
+  students,
   onSelectProject,
   onSelectStudent,
   initialCategory = 'All',
   initialContributor = 'All',
 }) => {
-  const allProjects = useMemo(() => getAllProjects(), []);
-  const allStudents = useMemo(() => getAllStudents(), []);
+  const allProjects = useMemo(() => projects || getAllProjects(), [projects]);
+  const allStudents = useMemo(() => students || getAllStudents(), [students]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
@@ -39,7 +48,11 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({
         const matchesStudent =
           project.contributorIds.includes(selectedContributor) ||
           project.contributors.some(
-            (c) => c.toLowerCase() === selectedContributor.toLowerCase()
+            (c) =>
+              c.toLowerCase() === selectedContributor.toLowerCase() ||
+              c
+                .toLowerCase()
+                .replace(/\s+/g, '-') === selectedContributor.toLowerCase()
           );
         if (!matchesStudent) return false;
       }
@@ -118,7 +131,7 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9FB0C8] hover:text-[#DCE6F5] transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9FB0C8] hover:text-[#DCE6F5] transition-colors cursor-pointer"
                 title="Clear search"
               >
                 <X size={15} />
@@ -160,7 +173,7 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                   isActive
                     ? 'bg-[#2563EB] text-white border border-[#38BDF8] shadow-md shadow-[#2563EB]/25'
                     : 'bg-[#080D18] text-[#9FB0C8] border border-[#243650] hover:border-[#38BDF8]/40 hover:text-[#DCE6F5]'
@@ -182,7 +195,7 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({
             <button
               type="button"
               onClick={resetFilters}
-              className="ml-auto text-xs font-mono text-[#38BDF8] hover:underline flex items-center gap-1 py-1"
+              className="ml-auto text-xs font-mono text-[#38BDF8] hover:underline flex items-center gap-1 py-1 cursor-pointer"
             >
               <X size={12} />
               Reset Filters
@@ -198,6 +211,7 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({
             <ProjectLabCard
               key={project.id}
               project={project}
+              allStudents={allStudents}
               onSelectProject={onSelectProject}
               onSelectStudent={onSelectStudent}
             />
@@ -215,7 +229,7 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({
           <button
             type="button"
             onClick={resetFilters}
-            className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-[#1d4ed8] text-white text-xs font-mono font-semibold transition-colors"
+            className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-[#1d4ed8] text-white text-xs font-mono font-semibold transition-colors cursor-pointer"
           >
             Reset All Filters
           </button>

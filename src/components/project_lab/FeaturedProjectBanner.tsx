@@ -10,16 +10,24 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { GithubIcon } from '../SocialIcons';
-import { ProjectLabItem, StudentProfile, getAllProjects, getStudentById } from '../../data/projectLabData';
+import {
+  ProjectLabItem,
+  StudentProfile,
+  getAllProjects,
+  getStudentById,
+} from '../../data/projectLabData';
+import { ProjectThumbnail } from './ProjectThumbnail';
 
 interface FeaturedProjectBannerProps {
   projects?: ProjectLabItem[];
+  students?: StudentProfile[];
   onSelectProject: (project: ProjectLabItem) => void;
   onSelectStudent?: (student: StudentProfile) => void;
 }
 
 export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
   projects = getAllProjects(),
+  students,
   onSelectProject,
   onSelectStudent,
 }) => {
@@ -33,7 +41,9 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
   const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const totalSlides = projects.length;
-  const currentProject = projects[currentIndex] || projects[0];
+  // Guard against out of bounds if projects change dynamically
+  const safeIndex = currentIndex >= totalSlides ? 0 : currentIndex;
+  const currentProject = projects[safeIndex] || projects[0];
 
   // Helper for safe slide switching with animation cooldown
   const goToSlide = useCallback(
@@ -49,12 +59,12 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
   );
 
   const handleNext = useCallback(() => {
-    goToSlide(currentIndex + 1);
-  }, [currentIndex, goToSlide]);
+    goToSlide(safeIndex + 1);
+  }, [safeIndex, goToSlide]);
 
   const handlePrev = useCallback(() => {
-    goToSlide(currentIndex - 1);
-  }, [currentIndex, goToSlide]);
+    goToSlide(safeIndex - 1);
+  }, [safeIndex, goToSlide]);
 
   // Autoplay management (5000ms interval)
   useEffect(() => {
@@ -80,7 +90,7 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
         autoplayTimerRef.current = null;
       }
     };
-  }, [currentIndex, isPaused, totalSlides, handleNext]);
+  }, [safeIndex, isPaused, totalSlides, handleNext]);
 
   // Pause when browser tab becomes inactive
   useEffect(() => {
@@ -109,7 +119,6 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsPaused(true);
     setTouchStartX(e.targetTouches[0].clientX);
-    setTouchEndX(null);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -118,13 +127,14 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
 
   const handleTouchEnd = () => {
     setIsPaused(false);
-    if (touchStartX === null || touchEndX === null) return;
+    if (!touchStartX || !touchEndX) return;
     const distance = touchStartX - touchEndX;
-    const minSwipeDistance = 45;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
 
-    if (distance > minSwipeDistance) {
+    if (isLeftSwipe) {
       handleNext();
-    } else if (distance < -minSwipeDistance) {
+    } else if (isRightSwipe) {
       handlePrev();
     }
 
@@ -132,21 +142,22 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
     setTouchEndX(null);
   };
 
-  if (!projects || projects.length === 0 || !currentProject) {
+  if (!currentProject) {
     return null;
   }
 
   const hasLiveDemo =
-    currentProject.workingUrl &&
+    Boolean(currentProject.workingUrl &&
     currentProject.workingUrl !== '#' &&
-    currentProject.workingUrl.startsWith('http');
+    currentProject.workingUrl.startsWith('http') &&
+    currentProject.isValidWebUrl !== false);
 
   const hasGithub =
-    currentProject.githubUrl &&
+    Boolean(currentProject.githubUrl &&
     currentProject.githubUrl !== '#' &&
-    currentProject.githubUrl.startsWith('http');
+    currentProject.githubUrl.startsWith('http'));
 
-  const formattedSlideNum = String(currentIndex + 1).padStart(2, '0');
+  const formattedSlideNum = String(safeIndex + 1).padStart(2, '0');
   const formattedTotal = String(totalSlides).padStart(2, '0');
 
   // Category badge color
@@ -161,6 +172,14 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
       default:
         return 'bg-[#243650] text-[#DCE6F5] border-[#243650]';
     }
+  };
+
+  const resolveStudent = (studentId: string, name: string): StudentProfile | undefined => {
+    if (students && students.length > 0) {
+      const match = students.find((s) => s.id === studentId || s.name.toLowerCase() === name.toLowerCase());
+      if (match) return match;
+    }
+    return getStudentById(studentId);
   };
 
   return (
@@ -201,13 +220,18 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
       >
         {/* Ambient Blurred Artwork Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <img
-            key={`ambient-${currentProject.id}`}
-            src={currentProject.thumbnailAsset}
-            alt=""
-            aria-hidden="true"
-            className="w-full h-full object-cover filter blur-3xl opacity-20 scale-125 transition-opacity duration-700"
-          />
+          {currentProject.thumbnailAsset && (
+            <img
+              key={`ambient-${currentProject.id}`}
+              src={currentProject.thumbnailAsset}
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-cover filter blur-3xl opacity-20 scale-125 transition-opacity duration-700"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-r from-[#080D18] via-[#101D35]/95 to-[#101D35]/60" />
           <div className="absolute inset-0 bg-[#080D18]/40" />
         </div>
@@ -229,44 +253,45 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
                 </span>
 
                 {currentProject.isCollaborative && (
-                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm backdrop-blur-md flex items-center gap-1.5">
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-[#38BDF8]/15 text-[#38BDF8] border border-[#38BDF8]/30 flex items-center gap-1.5 shadow-sm">
                     <Users size={12} />
-                    <span>Collaborative Project</span>
+                    <span>Collaborative Team</span>
                   </span>
                 )}
+
+                <span className="ml-auto text-xs font-mono text-[#9FB0C8]/60 hidden sm:inline-block">
+                  SLIDE {formattedSlideNum} OF {formattedTotal}
+                </span>
               </div>
 
-              {/* Title & Tagline with smooth transition */}
-              <div
-                key={`text-${currentProject.id}`}
-                className="space-y-2.5 transition-all duration-700 animate-in fade-in slide-in-from-left-2"
-              >
+              {/* Title & Tagline */}
+              <div className="space-y-2">
                 <h3
                   onClick={() => onSelectProject(currentProject)}
-                  className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-[#DCE6F5] hover:text-[#38BDF8] transition-colors cursor-pointer tracking-tight leading-tight"
+                  className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#DCE6F5] tracking-tight leading-tight hover:text-[#38BDF8] transition-colors cursor-pointer"
                 >
                   {currentProject.title}
                 </h3>
-
-                <p className="text-xs sm:text-sm md:text-base text-[#9FB0C8] line-clamp-3 leading-relaxed">
-                  {currentProject.tagline || currentProject.description}
+                <p className="text-sm font-medium text-[#38BDF8] font-mono tracking-wide">
+                  {currentProject.tagline}
                 </p>
               </div>
 
-              {/* Contributor Attribution Strip */}
+              {/* Description Preview */}
+              <p className="text-xs sm:text-sm text-[#9FB0C8] leading-relaxed line-clamp-3 sm:line-clamp-4">
+                {currentProject.description}
+              </p>
+
+              {/* Contributor Row */}
               <div className="pt-2 flex items-center gap-3">
-                <div className="flex -space-x-2 shrink-0">
-                  {currentProject.contributors.map((name, idx) => {
-                    const studentId = currentProject.contributorIds[idx];
-                    const student = studentId ? getStudentById(studentId) : undefined;
-                    const initials =
-                      student?.avatarInitials ||
-                      name
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .slice(0, 2)
-                        .toUpperCase();
+                <div className="flex -space-x-2 overflow-hidden">
+                  {currentProject.contributors.map((name) => {
+                    const initials = name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase();
 
                     return (
                       <div
@@ -287,7 +312,7 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
                   <div className="flex flex-wrap gap-1 font-semibold text-[#DCE6F5]">
                     {currentProject.contributors.map((name, idx) => {
                       const studentId = currentProject.contributorIds[idx];
-                      const student = studentId ? getStudentById(studentId) : undefined;
+                      const student = resolveStudent(studentId, name);
 
                       return (
                         <button
@@ -340,6 +365,19 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
                 </a>
               )}
 
+              {currentProject.secondaryUrl && (
+                <a
+                  href={currentProject.secondaryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-[#080D18]/90 hover:bg-[#172945] border border-[#243650] hover:border-[#38BDF8] text-[#DCE6F5] font-mono text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all shadow-sm"
+                  title={currentProject.secondaryUrlLabel || 'Secondary Link'}
+                >
+                  <span>{currentProject.secondaryUrlLabel || 'App'}</span>
+                  <ExternalLink size={13} className="text-[#38BDF8]" />
+                </a>
+              )}
+
               {hasGithub && (
                 <a
                   href={currentProject.githubUrl}
@@ -361,20 +399,11 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
           >
             {/* Artwork Frame */}
             <div className="relative w-full h-[220px] sm:h-[260px] md:h-[300px] lg:h-[380px] rounded-2xl overflow-hidden bg-[#080D18] border border-[#243650] shadow-2xl flex items-center justify-center group-hover:border-[#38BDF8]/50 transition-colors">
-              <img
-                key={`img-${currentProject.id}`}
-                src={currentProject.thumbnailAsset}
-                alt={currentProject.title}
-                loading="eager"
-                className="w-full h-full object-contain md:object-cover transition-all duration-700 ease-out group-hover:scale-[1.02]"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&auto=format&fit=crop&q=80';
-                }}
+              <ProjectThumbnail
+                project={currentProject}
+                aspectRatio="h-full w-full"
+                imageClassName="object-contain md:object-cover group-hover:scale-[1.02]"
               />
-
-              {/* Subtle vignette gradient on edges */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#080D18]/70 via-transparent to-transparent pointer-events-none" />
 
               {/* Hover inspect badge */}
               <div className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg bg-[#080D18]/85 border border-[#243650] text-[#38BDF8] text-[11px] font-mono font-medium flex items-center gap-1.5 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
@@ -393,7 +422,7 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
               type="button"
               onClick={handlePrev}
               aria-label="Previous project slide"
-              className="w-8 h-8 rounded-lg bg-[#101D35] hover:bg-[#2563EB] border border-[#243650] hover:border-[#38BDF8] text-[#9FB0C8] hover:text-white flex items-center justify-center transition-all focus:outline-none focus:ring-1 focus:ring-[#38BDF8]"
+              className="w-8 h-8 rounded-lg bg-[#101D35] hover:bg-[#2563EB] border border-[#243650] hover:border-[#38BDF8] text-[#9FB0C8] hover:text-white flex items-center justify-center transition-all focus:outline-none focus:ring-1 focus:ring-[#38BDF8] cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
@@ -401,23 +430,23 @@ export const FeaturedProjectBanner: React.FC<FeaturedProjectBannerProps> = ({
               type="button"
               onClick={handleNext}
               aria-label="Next project slide"
-              className="w-8 h-8 rounded-lg bg-[#101D35] hover:bg-[#2563EB] border border-[#243650] hover:border-[#38BDF8] text-[#9FB0C8] hover:text-white flex items-center justify-center transition-all focus:outline-none focus:ring-1 focus:ring-[#38BDF8]"
+              className="w-8 h-8 rounded-lg bg-[#101D35] hover:bg-[#2563EB] border border-[#243650] hover:border-[#38BDF8] text-[#9FB0C8] hover:text-white flex items-center justify-center transition-all focus:outline-none focus:ring-1 focus:ring-[#38BDF8] cursor-pointer"
             >
               <ChevronRight size={16} />
             </button>
           </div>
 
-          {/* Clickable Progress Indicators (All 11 Slides) */}
+          {/* Clickable Progress Indicators */}
           <div className="flex items-center gap-1.5 overflow-x-auto max-w-[60%] sm:max-w-none py-1">
             {projects.map((proj, idx) => {
-              const isActive = idx === currentIndex;
+              const isActive = idx === safeIndex;
               return (
                 <button
                   key={proj.id}
                   type="button"
                   onClick={() => goToSlide(idx)}
                   aria-label={`Jump to slide ${idx + 1}: ${proj.title}`}
-                  className={`transition-all duration-300 rounded-full ${
+                  className={`transition-all duration-300 rounded-full cursor-pointer ${
                     isActive
                       ? 'w-7 sm:w-8 h-2 bg-gradient-to-r from-[#38BDF8] to-[#2563EB] shadow-[0_0_10px_rgba(56,189,248,0.5)]'
                       : 'w-2 h-2 bg-[#243650] hover:bg-[#9FB0C8]/60'

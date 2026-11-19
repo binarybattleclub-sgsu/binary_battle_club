@@ -66,9 +66,11 @@ export const AppContent: React.FC = () => {
             <Route path="/code-compete" element={<CodeAndCompete />} />
             <Route path="/innovate-build" element={<InnovateAndBuild />} />
             <Route path="/innovate-build/student/:studentId" element={<InnovateAndBuild />} />
+            <Route path="/innovate-build/students/:studentId" element={<InnovateAndBuild />} />
             <Route path="/innovate-build/project/:projectId" element={<InnovateAndBuild />} />
             <Route path="/create-showcase" element={<InnovateAndBuild />} />
             <Route path="/create-showcase/student/:studentId" element={<InnovateAndBuild />} />
+            <Route path="/create-showcase/students/:studentId" element={<InnovateAndBuild />} />
             <Route path="/create-showcase/project/:projectId" element={<InnovateAndBuild />} />
             <Route path="/hackathons" element={<Hackathons />} />
             <Route path="/achievements" element={<Achievements />} />

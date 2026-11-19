@@ -1,11 +1,17 @@
 import React from 'react';
-import { ArrowLeft, Mail, FolderGit2, Users, ExternalLink, Sparkles, CheckCircle2 } from 'lucide-react';
-import { GithubIcon } from '../SocialIcons';
-import { StudentProfile, ProjectLabItem, getProjectsForStudent, getStudentById } from '../../data/projectLabData';
+import { ArrowLeft, Mail, FolderGit2, Users, Sparkles, CheckCircle2 } from 'lucide-react';
+import {
+  StudentProfile,
+  ProjectLabItem,
+  getProjectsForStudent,
+  getStudentById,
+} from '../../data/projectLabData';
 import { ProjectLabCard } from './ProjectLabCard';
 
 interface StudentPortfolioViewProps {
   student: StudentProfile;
+  allProjects?: ProjectLabItem[];
+  allStudents?: StudentProfile[];
   onBack: () => void;
   onSelectProject: (project: ProjectLabItem) => void;
   onSelectStudent: (student: StudentProfile) => void;
@@ -13,12 +19,34 @@ interface StudentPortfolioViewProps {
 
 export const StudentPortfolioView: React.FC<StudentPortfolioViewProps> = ({
   student,
+  allProjects,
+  allStudents,
   onBack,
   onSelectProject,
   onSelectStudent,
 }) => {
-  const projects = getProjectsForStudent(student.id);
+  const projects = allProjects
+    ? allProjects.filter(
+        (p) =>
+          student.projectIds.includes(p.id) ||
+          p.contributorIds.includes(student.id) ||
+          p.contributors.some(
+            (c) => c.toLowerCase() === student.name.toLowerCase()
+          )
+      )
+    : getProjectsForStudent(student.id);
+
   const collaborativeProjects = projects.filter((p) => p.isCollaborative);
+
+  const resolveStudent = (studentId: string, name: string): StudentProfile | undefined => {
+    if (allStudents && allStudents.length > 0) {
+      const match = allStudents.find(
+        (s) => s.id === studentId || s.name.toLowerCase() === name.toLowerCase()
+      );
+      if (match) return match;
+    }
+    return getStudentById(studentId);
+  };
 
   return (
     <div className="space-y-12 animate-in fade-in duration-300">
@@ -27,7 +55,7 @@ export const StudentPortfolioView: React.FC<StudentPortfolioViewProps> = ({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#101D35] hover:bg-[#172945] border border-[#243650] hover:border-[#38BDF8] text-[#DCE6F5] text-xs font-mono font-semibold transition-all group shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#101D35] hover:bg-[#172945] border border-[#243650] hover:border-[#38BDF8] text-[#DCE6F5] text-xs font-mono font-semibold transition-all group shadow-sm cursor-pointer"
         >
           <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
           <span>Back to Project Lab</span>
@@ -64,10 +92,12 @@ export const StudentPortfolioView: React.FC<StudentPortfolioViewProps> = ({
               <p className="text-sm sm:text-base text-[#9FB0C8] mt-1 max-w-xl">
                 {student.tagline}
               </p>
-              <div className="flex items-center gap-2 text-xs font-mono text-[#9FB0C8]/70 mt-2">
-                <Mail size={12} className="text-[#38BDF8]" />
-                <span>{student.email}</span>
-              </div>
+              {student.email ? (
+                <div className="flex items-center gap-2 text-xs font-mono text-[#9FB0C8]/70 mt-2">
+                  <Mail size={12} className="text-[#38BDF8]" />
+                  <span>{student.email}</span>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -110,7 +140,7 @@ export const StudentPortfolioView: React.FC<StudentPortfolioViewProps> = ({
           </span>
         </div>
 
-        {/* Collaboration Notice if SpendWise is in this student's projects */}
+        {/* Collaboration Notice with Clickable Co-Contributor links */}
         {collaborativeProjects.length > 0 && (
           <div className="p-4 rounded-2xl bg-[#2563EB]/10 border border-[#2563EB]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
@@ -120,8 +150,32 @@ export const StudentPortfolioView: React.FC<StudentPortfolioViewProps> = ({
                   Collaborative Engineering
                 </h4>
                 <p className="text-xs text-[#DCE6F5]/90 mt-0.5">
-                  {student.name} co-engineered projects with club peers. Explore collaborative partners directly through project details.
+                  {student.name} co-engineered projects with peers. Click on any collaborator to explore their individual portfolio:
                 </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {collaborativeProjects.flatMap((p) =>
+                    p.contributors
+                      .filter((c) => c.toLowerCase() !== student.name.toLowerCase())
+                      .map((coAuthor, idx) => {
+                        const coStudentId = p.contributorIds[p.contributors.indexOf(coAuthor)];
+                        const coStudent = resolveStudent(coStudentId, coAuthor);
+                        return (
+                          <button
+                            key={`${p.id}-${coAuthor}`}
+                            type="button"
+                            onClick={() => {
+                              if (coStudent) onSelectStudent(coStudent);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-[#101D35] hover:bg-[#2563EB] border border-[#243650] hover:border-[#38BDF8] text-[#38BDF8] hover:text-white text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Users size={11} />
+                            <span>{coAuthor}</span>
+                            <span className="text-[10px] text-[#9FB0C8]/60">({p.title})</span>
+                          </button>
+                        );
+                      })
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -133,6 +187,7 @@ export const StudentPortfolioView: React.FC<StudentPortfolioViewProps> = ({
             <ProjectLabCard
               key={project.id}
               project={project}
+              allStudents={allStudents}
               onSelectProject={onSelectProject}
               onSelectStudent={onSelectStudent}
             />

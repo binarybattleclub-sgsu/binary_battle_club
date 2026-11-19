@@ -1,17 +1,34 @@
 import React from 'react';
-import { ArrowRight, FolderGit2, Code2, Users } from 'lucide-react';
-import { StudentProfile, getProjectsForStudent } from '../../data/projectLabData';
+import { ArrowRight, FolderGit2 } from 'lucide-react';
+import {
+  StudentProfile,
+  ProjectLabItem,
+  getProjectsForStudent,
+} from '../../data/projectLabData';
+import { ProjectThumbnail } from './ProjectThumbnail';
 
 interface StudentProfileCardProps {
   student: StudentProfile;
+  projects?: ProjectLabItem[];
   onSelectStudent: (student: StudentProfile) => void;
 }
 
 export const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
   student,
+  projects,
   onSelectStudent,
 }) => {
-  const studentProjects = getProjectsForStudent(student.id);
+  const studentProjects = projects
+    ? projects.filter(
+        (p) =>
+          student.projectIds.includes(p.id) ||
+          p.contributorIds.includes(student.id) ||
+          p.contributors.some(
+            (c) => c.toLowerCase() === student.name.toLowerCase()
+          )
+      )
+    : getProjectsForStudent(student.id);
+
   const projectCount = studentProjects.length;
 
   return (
@@ -39,7 +56,7 @@ export const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
           <h3 className="text-base sm:text-lg font-bold text-[#DCE6F5] group-hover:text-[#38BDF8] transition-colors leading-snug">
             {student.name}
           </h3>
-          <p className="text-xs text-[#9FB0C8] font-normal leading-relaxed">
+          <p className="text-xs text-[#9FB0C8] font-normal leading-relaxed line-clamp-2">
             {student.tagline}
           </p>
         </div>
@@ -59,18 +76,12 @@ export const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
                 key={proj.id}
                 className="relative aspect-video rounded-xl overflow-hidden bg-[#080D18] border border-[#243650] group-hover:border-[#38BDF8]/40 transition-colors"
               >
-                <img
-                  src={proj.thumbnailAsset}
-                  alt={proj.title}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&auto=format&fit=crop&q=80';
-                  }}
+                <ProjectThumbnail
+                  project={proj}
+                  aspectRatio="aspect-video"
+                  imageClassName="group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#080D18]/90 via-transparent to-transparent pointer-events-none" />
-                <span className="absolute bottom-1.5 left-1.5 right-1.5 text-[9px] font-mono text-[#DCE6F5] truncate leading-tight">
+                <span className="absolute bottom-1.5 left-1.5 right-1.5 text-[9px] font-mono text-[#DCE6F5] truncate leading-tight z-10 drop-shadow">
                   {proj.title}
                 </span>
               </div>

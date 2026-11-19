@@ -1,16 +1,32 @@
 import React, { useEffect } from 'react';
-import { X, ExternalLink, Users, Calendar, ArrowRight, Sparkles, CheckCircle2, Info } from 'lucide-react';
+import {
+  X,
+  ExternalLink,
+  Users,
+  ArrowRight,
+  Sparkles,
+  CheckCircle2,
+  Info,
+  Smartphone,
+} from 'lucide-react';
 import { GithubIcon } from '../SocialIcons';
-import { ProjectLabItem, StudentProfile, getStudentById } from '../../data/projectLabData';
+import {
+  ProjectLabItem,
+  StudentProfile,
+  getStudentById,
+} from '../../data/projectLabData';
+import { ProjectThumbnail } from './ProjectThumbnail';
 
 interface ProjectDetailModalProps {
   project: ProjectLabItem | null;
+  allStudents?: StudentProfile[];
   onClose: () => void;
   onSelectStudent?: (student: StudentProfile) => void;
 }
 
 export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
   project,
+  allStudents,
   onClose,
   onSelectStudent,
 }) => {
@@ -36,8 +52,32 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
 
   if (!project) return null;
 
-  const hasLiveDemo = project.workingUrl && project.workingUrl !== '#' && project.workingUrl.startsWith('http');
-  const hasGithub = project.githubUrl && project.githubUrl !== '#' && project.githubUrl.startsWith('http');
+  const hasLiveDemo = Boolean(
+    project.workingUrl &&
+      project.workingUrl !== '#' &&
+      project.workingUrl.startsWith('http') &&
+      project.isValidWebUrl !== false
+  );
+  const hasGithub = Boolean(
+    project.githubUrl &&
+      project.githubUrl !== '#' &&
+      project.githubUrl.startsWith('http')
+  );
+  const hasSecondary = Boolean(
+    project.secondaryUrl &&
+      project.secondaryUrl !== '#' &&
+      project.secondaryUrl.startsWith('http')
+  );
+
+  const resolveStudent = (studentId: string, name: string): StudentProfile | undefined => {
+    if (allStudents && allStudents.length > 0) {
+      const match = allStudents.find(
+        (s) => s.id === studentId || s.name.toLowerCase() === name.toLowerCase()
+      );
+      if (match) return match;
+    }
+    return getStudentById(studentId);
+  };
 
   return (
     <div
@@ -58,7 +98,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-[#080D18]/80 hover:bg-[#2563EB] border border-[#243650] hover:border-[#38BDF8] text-[#9FB0C8] hover:text-white flex items-center justify-center transition-all shadow-lg"
+          className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-[#080D18]/80 hover:bg-[#2563EB] border border-[#243650] hover:border-[#38BDF8] text-[#9FB0C8] hover:text-white flex items-center justify-center transition-all shadow-lg cursor-pointer"
           aria-label="Close project modal"
         >
           <X size={18} />
@@ -68,19 +108,14 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
         <div className="overflow-y-auto p-6 sm:p-8 space-y-6">
           {/* Main Visual Preview */}
           <div className="relative aspect-[16/9] sm:aspect-[16/8] rounded-2xl overflow-hidden bg-[#080D18] border border-[#243650]">
-            <img
-              src={project.thumbnailAsset}
-              alt={project.title}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src =
-                  'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&auto=format&fit=crop&q=80';
-              }}
+            <ProjectThumbnail
+              project={project}
+              aspectRatio="h-full w-full"
+              imageClassName="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#101D35] via-transparent to-black/30 pointer-events-none" />
 
             {/* Badges in Image */}
-            <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center gap-2">
+            <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center gap-2 z-10">
               <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-[#2563EB] text-white border border-[#38BDF8]/60 shadow-lg">
                 {project.category}
               </span>
@@ -101,7 +136,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             >
               {project.title}
             </h2>
-            <p className="text-sm sm:text-base text-[#38BDF8] font-medium mt-1.5">
+            <p className="text-sm sm:text-base text-[#38BDF8] font-medium mt-1.5 font-mono">
               {project.tagline}
             </p>
           </div>
@@ -111,7 +146,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             <h4 className="text-xs font-mono uppercase tracking-wider text-[#9FB0C8] font-bold">
               Project Overview & Architecture
             </h4>
-            <div className="p-4 rounded-2xl bg-[#080D18]/70 border border-[#243650] text-sm text-[#DCE6F5]/90 leading-relaxed whitespace-pre-line">
+            <div className="p-4 rounded-2xl bg-[#080D18]/70 border border-[#243650] text-sm text-[#DCE6F5]/90 leading-relaxed whitespace-pre-line font-sans">
               {project.description}
             </div>
           </div>
@@ -127,6 +162,14 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             </div>
           )}
 
+          {/* Alternate Titles Note if Present */}
+          {project.alternateTitles && project.alternateTitles.length > 0 && (
+            <div className="p-3.5 rounded-2xl bg-[#101D35] border border-[#243650] text-xs text-[#9FB0C8]">
+              <span className="font-mono text-[#38BDF8] font-semibold">Also submitted as: </span>
+              {project.alternateTitles.join(', ')}
+            </div>
+          )}
+
           {/* Student Contributors */}
           <div>
             <h4 className="text-xs font-mono uppercase tracking-wider text-[#9FB0C8] font-bold mb-3 flex items-center gap-1.5">
@@ -136,7 +179,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {project.contributors.map((name, idx) => {
                 const studentId = project.contributorIds[idx];
-                const student = studentId ? getStudentById(studentId) : undefined;
+                const student = resolveStudent(studentId, name);
 
                 return (
                   <div
@@ -145,7 +188,13 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#101D35] to-[#2563EB]/40 border border-[#2563EB]/40 flex items-center justify-center text-xs font-mono font-bold text-[#DCE6F5]">
-                        {student?.avatarInitials || name.slice(0, 2).toUpperCase()}
+                        {student?.avatarInitials ||
+                          name
+                            .split(' ')
+                            .map((w) => w[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
                       </div>
                       <div>
                         <div className="text-sm font-bold text-[#DCE6F5]">{name}</div>
@@ -162,7 +211,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                           onClose();
                           onSelectStudent(student);
                         }}
-                        className="px-2.5 py-1.5 rounded-lg bg-[#2563EB]/15 hover:bg-[#2563EB] text-[#38BDF8] hover:text-white border border-[#2563EB]/30 text-xs font-mono font-semibold transition-all flex items-center gap-1"
+                        className="px-2.5 py-1.5 rounded-lg bg-[#2563EB]/15 hover:bg-[#2563EB] text-[#38BDF8] hover:text-white border border-[#2563EB]/30 text-xs font-mono font-semibold transition-all flex items-center gap-1 cursor-pointer"
                       >
                         <span>Portfolio</span>
                         <ArrowRight size={12} />
@@ -182,7 +231,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             <span>Verified Binary Battle Club Submission</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {hasGithub && (
               <a
                 href={project.githubUrl}
@@ -192,6 +241,19 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
               >
                 <GithubIcon size={15} />
                 <span>GitHub Repository</span>
+              </a>
+            )}
+
+            {hasSecondary && (
+              <a
+                href={project.secondaryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2.5 rounded-xl bg-[#101D35] hover:bg-[#172945] border border-[#243650] hover:border-[#38BDF8] text-[#38BDF8] text-xs font-mono font-semibold flex items-center gap-2 transition-all shadow-sm"
+              >
+                <Smartphone size={15} />
+                <span>{project.secondaryUrlLabel || 'Mobile App'}</span>
+                <ExternalLink size={13} />
               </a>
             )}
 

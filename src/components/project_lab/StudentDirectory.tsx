@@ -1,15 +1,24 @@
 import React from 'react';
-import { Users, Sparkles } from 'lucide-react';
-import { StudentProfile, getAllStudents } from '../../data/projectLabData';
+import { Users } from 'lucide-react';
+import {
+  StudentProfile,
+  ProjectLabItem,
+  getAllStudents,
+  getAllProjects,
+} from '../../data/projectLabData';
 import { StudentProfileCard } from './StudentProfileCard';
 
 interface StudentDirectoryProps {
+  students?: StudentProfile[];
+  projects?: ProjectLabItem[];
   onSelectStudent: (student: StudentProfile) => void;
 }
 
-export const StudentDirectory: React.FC<StudentDirectoryProps> = ({ onSelectStudent }) => {
-  const students = getAllStudents();
-
+export const StudentDirectory: React.FC<StudentDirectoryProps> = ({
+  students = getAllStudents(),
+  projects = getAllProjects(),
+  onSelectStudent,
+}) => {
   return (
     <section className="relative py-12 md:py-16">
       {/* Section Header */}
@@ -39,6 +48,7 @@ export const StudentDirectory: React.FC<StudentDirectoryProps> = ({ onSelectStud
           <StudentProfileCard
             key={student.id}
             student={student}
+            projects={projects}
             onSelectStudent={onSelectStudent}
           />
         ))}
