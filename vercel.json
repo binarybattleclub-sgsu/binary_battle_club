@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/explore-share/image/:fileId",
+      "destination": "/api/explore-share-image?fileId=:fileId"
+    }
+  ]
+}
