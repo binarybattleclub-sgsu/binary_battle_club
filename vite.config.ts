@@ -448,52 +448,70 @@ export default defineConfig(({ mode }) => {
                   return;
                 }
 
-                const headers = rows[0].map((h) => h.toLowerCase().trim());
+                const rawHeaders = rows[0];
                 let colDate = -1;
                 let colUrl = -1;
                 let colDesc = -1;
+                let colThumbnail = -1;
                 let colTitle = -1;
                 let colType = -1;
-                let colThumbnail = -1;
                 let colCategory = -1;
                 let colPublished = -1;
                 let colFeatured = -1;
                 let colOrder = -1;
 
-                for (let i = 0; i < headers.length; i++) {
-                  const h = headers[i];
-                  if (h.includes('date') || h.includes('upload')) colDate = i;
-                  else if (
-                    h.includes('link') ||
-                    h.includes('url') ||
-                    h.includes('youtube') ||
-                    h.includes('shorts') ||
-                    h.includes('playlist')
-                  )
-                    colUrl = i;
-                  else if (h.includes('desc')) colDesc = i;
-                  else if (h.includes('title') || h.includes('name')) colTitle = i;
-                  else if (h === 'type' || h.includes('content type')) colType = i;
-                  else if (h.includes('thumb') || h.includes('poster') || h.includes('image'))
+                // Strict unambiguous header matching
+                for (let i = 0; i < rawHeaders.length; i++) {
+                  const h = rawHeaders[i].toLowerCase().replace(/\s+/g, ' ').trim();
+
+                  // Check THUMBNAIL first so 'thumbnail drive link' is NOT mistaken for youtube link!
+                  if (
+                    h.includes('thumb') ||
+                    h.includes('drive link') ||
+                    h.includes('poster') ||
+                    h === 'image' ||
+                    h.includes('thumbnail drive link')
+                  ) {
                     colThumbnail = i;
-                  else if (h.includes('cat') || h.includes('tag')) colCategory = i;
-                  else if (h.includes('pub') || h.includes('visible') || h.includes('status'))
+                  } else if (
+                    h.includes('youtube') ||
+                    h.includes('video link') ||
+                    h.includes('playlist link') ||
+                    h.includes('shorts link') ||
+                    h.includes('link of youtube') ||
+                    h === 'link' ||
+                    h === 'url'
+                  ) {
+                    colUrl = i;
+                  } else if (h.includes('date') || h.includes('upload')) {
+                    colDate = i;
+                  } else if (h.includes('desc')) {
+                    colDesc = i;
+                  } else if (h === 'title' || h.includes('title') || h === 'name') {
+                    colTitle = i;
+                  } else if (h === 'type' || h.includes('content type')) {
+                    colType = i;
+                  } else if (h.includes('cat') || h.includes('tag')) {
+                    colCategory = i;
+                  } else if (h.includes('pub') || h.includes('visible') || h.includes('status')) {
                     colPublished = i;
-                  else if (h.includes('feat') || h.includes('star') || h.includes('highlight'))
+                  } else if (h.includes('feat') || h.includes('star') || h.includes('highlight')) {
                     colFeatured = i;
-                  else if (h.includes('order') || h.includes('index') || h.includes('sno'))
+                  } else if (h.includes('order') || h.includes('index') || h.includes('sno')) {
                     colOrder = i;
+                  }
                 }
 
-                if (colDate === -1 && headers.length > 0) colDate = 0;
-                if (colUrl === -1 && headers.length > 1) colUrl = 1;
-                if (colDesc === -1 && headers.length > 2) colDesc = 2;
+                if (colDate === -1 && rawHeaders.length > 0) colDate = 0;
+                if (colUrl === -1 && rawHeaders.length > 1) colUrl = 1;
+                if (colDesc === -1 && rawHeaders.length > 2) colDesc = 2;
+                if (colThumbnail === -1 && rawHeaders.length > 3) colThumbnail = 3;
 
                 const items: any[] = [];
 
                 for (let r = 1; r < rows.length; r++) {
                   const row = rows[r];
-                  const rawUrl = (row[colUrl] || '').replace(/^"|"$/g, '').trim();
+                  const rawUrl = colUrl !== -1 ? (row[colUrl] || '').replace(/^"|"$/g, '').trim() : '';
                   if (!rawUrl) continue;
 
                   const dateStr = colDate !== -1 ? (row[colDate] || '').replace(/^"|"$/g, '').trim() : '';
@@ -506,47 +524,82 @@ export default defineConfig(({ mode }) => {
                   const featStr = colFeatured !== -1 ? (row[colFeatured] || '').replace(/^"|"$/g, '').trim() : '';
                   const orderStr = colOrder !== -1 ? (row[colOrder] || '').replace(/^"|"$/g, '').trim() : '';
 
+                  // Central parsing
                   let contentType = 'video';
+                  let videoId = '';
+                  let playlistId = '';
+
+                  const pMatch = rawUrl.match(/[?&]list=([a-zA-Z0-9_-]+)/i) || rawUrl.match(/\/playlist\/([a-zA-Z0-9_-]+)/i);
+                  if (pMatch) {
+                    playlistId = pMatch[1];
+                    contentType = 'playlist';
+                  }
+
+                  const sMatch = rawUrl.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i);
+                  if (sMatch) {
+                    videoId = sMatch[1];
+                    contentType = 'short';
+                  }
+
+                  if (!videoId) {
+                    const vMatch = rawUrl.match(
+                      /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i
+                    );
+                    if (vMatch) {
+                      videoId = vMatch[1];
+                      if (!pMatch) contentType = 'video';
+                    }
+                  }
+
                   if (typeStr) {
                     const t = typeStr.toLowerCase();
                     if (t.includes('short')) contentType = 'short';
-                    else if (t.includes('play') || t.includes('series')) contentType = 'playlist';
-                  } else {
-                    const l = rawUrl.toLowerCase();
-                    if (l.includes('/shorts/')) contentType = 'short';
-                    else if (l.includes('list=') || l.includes('/playlist') || l.includes('videoseries'))
-                      contentType = 'playlist';
+                    else if (t.includes('play')) contentType = 'playlist';
+                    else if (t.includes('vid')) contentType = 'video';
                   }
 
-                  let videoId = '';
-                  const vMatch = rawUrl.match(
-                    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i
-                  );
-                  if (vMatch) videoId = vMatch[1];
-                  else if (/^[a-zA-Z0-9_-]{11}$/.test(rawUrl)) videoId = rawUrl;
-
-                  let playlistId = '';
-                  const pMatch = rawUrl.match(/[?&]list=([a-zA-Z0-9_-]+)/i) || rawUrl.match(/\/playlist\/([a-zA-Z0-9_-]+)/i);
-                  if (pMatch) playlistId = pMatch[1];
-                  else if (/^(?:PL|UU|LL|FL|RD|OLAK5uy_)[a-zA-Z0-9_-]+$/.test(rawUrl)) playlistId = rawUrl;
-
-                  let thumbnailUrl = '';
+                  // 1. Primary Drive Thumbnail
+                  let customDriveThumb = '';
                   if (thumbStr) {
-                    const driveMatch = thumbStr.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]{20,})/);
-                    if (driveMatch) {
-                      thumbnailUrl = `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+                    const driveMatch =
+                      thumbStr.match(/(?:id=|\/d\/|\/file\/d\/)([a-zA-Z0-9_-]{20,})/i) ||
+                      thumbStr.match(/google\.com\/.*?[\?&]id=([a-zA-Z0-9_-]{20,})/i) ||
+                      thumbStr.match(/googleusercontent\.com\/d\/([a-zA-Z0-9_-]{20,})/i);
+
+                    if (driveMatch && driveMatch[1]) {
+                      customDriveThumb = `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1280`;
+                    } else if (/^[a-zA-Z0-9_-]{25,}$/.test(thumbStr)) {
+                      customDriveThumb = `https://drive.google.com/thumbnail?id=${thumbStr}&sz=w1280`;
                     } else if (thumbStr.startsWith('http')) {
-                      thumbnailUrl = thumbStr;
+                      customDriveThumb = thumbStr;
                     }
                   }
-                  if (!thumbnailUrl && videoId) {
-                    thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                  }
-                  if (!thumbnailUrl && contentType === 'playlist') {
-                    thumbnailUrl =
-                      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+
+                  // 2. Secondary YouTube Fallback
+                  let fallbackThumb = '';
+                  if (videoId) {
+                    fallbackThumb = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
                   }
 
+                  if (!customDriveThumb && !fallbackThumb && contentType === 'playlist' && playlistId) {
+                    try {
+                      const oRes = await fetch(
+                        `https://www.youtube.com/oembed?url=${encodeURIComponent(
+                          `https://www.youtube.com/playlist?list=${playlistId}`
+                        )}&format=json`
+                      );
+                      if (oRes.ok) {
+                        const oJson = await oRes.json();
+                        if (oJson.thumbnail_url) {
+                          fallbackThumb = oJson.thumbnail_url;
+                        }
+                      }
+                    } catch {}
+                  }
+
+                  const finalThumb = customDriveThumb || fallbackThumb || '';
+
+                  // Title
                   let title = titleStr;
                   if (!title) {
                     if (descStr) {
@@ -584,7 +637,9 @@ export default defineConfig(({ mode }) => {
                     title,
                     description: descStr,
                     category: catStr || 'Programming',
-                    thumbnailUrl,
+                    thumbnailUrl: finalThumb,
+                    customThumbnailUrl: customDriveThumb || undefined,
+                    fallbackThumbnailUrl: fallbackThumb || undefined,
                     isFeatured,
                     isPublished,
                     displayOrder,

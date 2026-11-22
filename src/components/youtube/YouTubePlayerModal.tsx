@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { X, ExternalLink, AlertCircle, ListVideo, Flame, Film } from 'lucide-react';
 import { YouTubeVideo } from '../../types/youtube';
-import { getYouTubeEmbedUrl, getYouTubeExternalUrl } from '../../services/youtubeService';
+import { parseYouTubeUrl } from '../../services/youtubeService';
 
 interface YouTubePlayerModalProps {
   video: YouTubeVideo | null;
@@ -30,10 +30,13 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({ video, o
 
   if (!video) return null;
 
-  const embedUrl = getYouTubeEmbedUrl(video);
-  const externalUrl = getYouTubeExternalUrl(video);
-  const isShort = video.contentType === 'short';
-  const isPlaylist = video.contentType === 'playlist';
+  const parsed = video.parsedUrl || parseYouTubeUrl(video.youtubeUrl);
+  const embedUrl = parsed.embedUrl;
+  const externalUrl = parsed.externalUrl || video.youtubeUrl;
+  const hasExternalUrl = Boolean(externalUrl && externalUrl.startsWith('http'));
+
+  const isShort = video.contentType === 'short' || parsed.contentType === 'short';
+  const isPlaylist = video.contentType === 'playlist' || parsed.contentType === 'playlist';
 
   let typeLabel = 'Video';
   let badgeIcon = <Film size={12} className="text-[#38BDF8]" />;
@@ -79,17 +82,19 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({ video, o
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Fallback External Link */}
-            <a
-              href={externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-2.5 py-1 rounded-lg bg-[#101D35] hover:bg-[#172945] border border-[#243650] hover:border-[#38BDF8] text-[#38BDF8] text-xs font-mono flex items-center gap-1.5 transition-colors"
-              title="Watch directly on YouTube (if embedding is restricted)"
-            >
-              <ExternalLink size={13} />
-              <span className="hidden sm:inline">YouTube</span>
-            </a>
+            {/* Direct External Link */}
+            {hasExternalUrl && (
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2.5 py-1 rounded-lg bg-[#101D35] hover:bg-[#172945] border border-[#243650] hover:border-[#38BDF8] text-[#38BDF8] text-xs font-mono flex items-center gap-1.5 transition-colors"
+                title="Watch directly on YouTube"
+              >
+                <ExternalLink size={13} />
+                <span className="hidden sm:inline">YouTube</span>
+              </a>
+            )}
 
             {/* Close Button */}
             <button
@@ -108,13 +113,33 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({ video, o
             isShort ? 'aspect-[9/16] max-h-[70vh]' : 'aspect-video'
           } bg-[#080D18] flex items-center justify-center`}
         >
-          <iframe
-            src={embedUrl}
-            title={video.title}
-            className="w-full h-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
+          {embedUrl ? (
+            <iframe
+              src={embedUrl}
+              title={video.title}
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          ) : (
+            <div className="p-8 text-center space-y-3">
+              <AlertCircle size={32} className="mx-auto text-amber-400" />
+              <p className="text-xs text-[#9FB0C8]">
+                Unable to embed this content directly.
+              </p>
+              {hasExternalUrl && (
+                <a
+                  href={externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary inline-flex items-center gap-2"
+                >
+                  <span>Open on YouTube</span>
+                  <ExternalLink size={14} />
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Details Bottom Bar */}
@@ -125,14 +150,19 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({ video, o
             </p>
             <p className="text-[11px] font-mono text-[#9FB0C8]/70">
               {isPlaylist ? (
-                <>Playlist ID: <span className="text-[#38BDF8]">{video.playlistId || video.youtubeId}</span> • Multi-video series</>
+                <>Playlist: <span className="text-[#38BDF8]">{parsed.playlistId || video.playlistId || 'Series'}</span> • Full curriculum playback</>
               ) : (
-                <>ID: <span className="text-[#38BDF8]">{video.youtubeId}</span> • Privacy-enhanced playback</>
+                <>Video ID: <span className="text-[#38BDF8]">{parsed.videoId || video.youtubeId || 'HQ'}</span> • High-definition playback</>
               )}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+          <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
+            {hasExternalUrl && (
+              <span className="text-[11px] font-mono text-[#9FB0C8]/80 hidden md:inline">
+                Embedding restricted? Watch directly on YouTube
+              </span>
+            )}
             <span className="text-[11px] font-mono text-[#9FB0C8]/80 flex items-center gap-1">
               <AlertCircle size={12} className="text-[#38BDF8]" />
               <span>Press <kbd className="px-1 py-0.5 rounded bg-[#080D18] border border-[#243650] text-[#DCE6F5]">Esc</kbd></span>

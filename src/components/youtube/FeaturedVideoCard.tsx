@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import { YouTubeIcon } from './YouTubeIcon';
 import { YouTubeVideo } from '../../types/youtube';
-import { getYouTubeExternalUrl } from '../../services/youtubeService';
+import { parseYouTubeUrl } from '../../services/youtubeService';
+import { VideoThumbnail } from './VideoThumbnail';
 
 interface FeaturedVideoCardProps {
   video: YouTubeVideo;
@@ -20,7 +21,13 @@ export const FeaturedVideoCard: React.FC<FeaturedVideoCardProps> = ({
   video,
   onPlay,
 }) => {
-  const externalUrl = getYouTubeExternalUrl(video);
+  const parsed = video.parsedUrl || parseYouTubeUrl(video.youtubeUrl);
+  const externalUrl = parsed.externalUrl || video.youtubeUrl;
+  const hasExternalUrl = Boolean(externalUrl && externalUrl.startsWith('http'));
+
+  const primaryThumb = video.customThumbnailUrl || video.thumbnailUrl;
+  const fallbackThumb = video.fallbackThumbnailUrl || parsed.thumbnailFallbackUrl;
+
   const isPlaylist = video.contentType === 'playlist';
   const isShort = video.contentType === 'short';
 
@@ -46,46 +53,41 @@ export const FeaturedVideoCard: React.FC<FeaturedVideoCardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center relative z-10">
         {/* Left Column: Media Preview */}
         <div className="lg:col-span-7">
-          <div
-            onClick={() => onPlay(video)}
-            className="group/thumb relative w-full aspect-video rounded-2xl overflow-hidden border border-[#243650] shadow-2xl bg-[#080D18] cursor-pointer"
-          >
-            <img
-              src={video.customThumbnailUrl || video.thumbnailUrl}
+          <div className="group/thumb relative w-full aspect-video rounded-2xl overflow-hidden border border-[#243650] shadow-2xl bg-[#080D18]">
+            <VideoThumbnail
+              primarySrc={primaryThumb}
+              fallbackSrc={fallbackThumb}
               alt={video.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover/thumb:scale-105"
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (!target.src.includes('hqdefault') && video.youtubeId) {
-                  target.src = `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`;
-                }
-              }}
-            />
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#080D18]/90 via-[#080D18]/30 to-transparent pointer-events-none" />
+              contentType={video.contentType}
+              aspect="video"
+              onClick={() => onPlay(video)}
+            >
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#080D18]/90 via-[#080D18]/30 to-transparent pointer-events-none" />
 
-            {/* Glowing Big Play Button */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#2563EB] text-white flex items-center justify-center shadow-[0_0_35px_rgba(37,99,235,0.8)] border-2 border-[#38BDF8] transition-transform duration-300 group-hover/thumb:scale-110">
-                {isPlaylist ? (
-                  <ListVideo size={30} className="text-white" />
-                ) : (
-                  <Play size={28} className="ml-1.5 fill-white text-white" />
-                )}
+              {/* Glowing Big Play Button */}
+              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#2563EB] text-white flex items-center justify-center shadow-[0_0_35px_rgba(37,99,235,0.8)] border-2 border-[#38BDF8] transition-transform duration-300 group-hover/thumb:scale-110">
+                  {isPlaylist ? (
+                    <ListVideo size={30} className="text-white" />
+                  ) : (
+                    <Play size={28} className="ml-1.5 fill-white text-white" />
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* YouTube Tag (Bottom Right) */}
-            <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-[#080D18]/85 backdrop-blur-md border border-[#243650] text-[11px] font-mono text-[#9FB0C8] flex items-center gap-1.5 shadow-md">
-              <YouTubeIcon size={14} className="text-red-500" />
-              <span>{typeTag}</span>
-            </div>
+              {/* YouTube Tag (Bottom Right) */}
+              <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-[#080D18]/85 backdrop-blur-md border border-[#243650] text-[11px] font-mono text-[#9FB0C8] flex items-center gap-1.5 shadow-md z-10">
+                <YouTubeIcon size={14} className="text-red-500" />
+                <span>{typeTag}</span>
+              </div>
 
-            {/* Featured Badge (Top Left) */}
-            <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-[#2563EB]/90 backdrop-blur-md border border-[#38BDF8]/50 text-xs font-mono font-bold text-white flex items-center gap-1.5 shadow-lg">
-              <Star size={13} className="fill-amber-300 text-amber-300" />
-              <span>{typeBadgeLabel}</span>
-            </div>
+              {/* Featured Badge (Top Left) */}
+              <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-[#2563EB]/90 backdrop-blur-md border border-[#38BDF8]/50 text-xs font-mono font-bold text-white flex items-center gap-1.5 shadow-lg z-10">
+                <Star size={13} className="fill-amber-300 text-amber-300" />
+                <span>{typeBadgeLabel}</span>
+              </div>
+            </VideoThumbnail>
           </div>
         </div>
 
@@ -127,15 +129,17 @@ export const FeaturedVideoCard: React.FC<FeaturedVideoCardProps> = ({
               <span>{ctaLabel}</span>
             </button>
 
-            <a
-              href={externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-secondary"
-            >
-              <span>{isPlaylist ? 'Open Playlist' : 'YouTube'}</span>
-              <ExternalLink size={14} />
-            </a>
+            {hasExternalUrl && (
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary"
+              >
+                <span>{isPlaylist ? 'Open Playlist' : 'YouTube'}</span>
+                <ExternalLink size={14} />
+              </a>
+            )}
           </div>
         </div>
       </div>

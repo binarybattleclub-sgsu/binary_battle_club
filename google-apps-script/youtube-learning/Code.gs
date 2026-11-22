@@ -13,8 +13,9 @@
  *
  * This Apps Script provides a high-performance, read-only JSON Web App endpoint
  * that parses YouTube links, detects content types (video, short, playlist),
- * extracts IDs, converts Google Drive thumbnails to high-speed CDN URLs,
- * and returns standardized metadata for the Binary Battle Club frontend.
+ * extracts IDs, converts Google Drive thumbnails (including Smart Chips)
+ * to high-speed CDN URLs, and returns standardized metadata for the
+ * Binary Battle Club frontend.
  */
 
 // Target spreadsheet configuration
@@ -27,7 +28,9 @@ var SHEET_NAME = 'Sheet1';
 function doGet(e) {
   try {
     var sheet = getTargetSheet();
-    var data = sheet.getDataRange().getValues();
+    var range = sheet.getDataRange();
+    var data = range.getValues();
+    var richTexts = range.getRichTextValues();
 
     if (!data || data.length <= 1) {
       // Empty or header-only sheet
@@ -46,6 +49,8 @@ function doGet(e) {
 
     for (var r = 1; r < data.length; r++) {
       var row = data[r];
+      var richRow = richTexts[r];
+
       var rawUrl = getVal(row, colMap.url);
 
       // Skip row if no link provided
@@ -58,27 +63,54 @@ function doGet(e) {
       var description = getVal(row, colMap.description);
       var rawTitle = getVal(row, colMap.title);
       var rawType = getVal(row, colMap.type);
-      var rawThumbnail = getVal(row, colMap.thumbnail);
       var rawCategory = getVal(row, colMap.category);
       var rawPublished = getVal(row, colMap.published);
       var rawFeatured = getVal(row, colMap.featured);
       var rawOrder = getVal(row, colMap.order);
 
-      // 1. Determine Content Type
-      var contentType = resolveContentType(rawType, url);
-
-      // 2. Extract YouTube Video / Playlist ID
-      var videoId = extractYouTubeId(url);
-      var playlistId = extractPlaylistId(url);
-
-      if (contentType === 'playlist' && !playlistId && videoId) {
-        playlistId = videoId;
+      // Read thumbnail from Smart Chip link or cell text
+      var rawThumbnail = '';
+      if (colMap.thumbnail !== -1 && richRow && richRow[colMap.thumbnail]) {
+        var richCell = richRow[colMap.thumbnail];
+        var chipLink = richCell.getLinkUrl();
+        if (chipLink && String(chipLink).trim() !== '') {
+          rawThumbnail = String(chipLink).trim();
+        }
+      }
+      if (!rawThumbnail) {
+        rawThumbnail = getVal(row, colMap.thumbnail);
       }
 
-      // 3. Resolve Thumbnail (Drive CDN or standard YouTube thumbnail)
-      var thumbnailUrl = resolveThumbnailUrl(rawThumbnail, videoId, contentType);
+      // 1. Central YouTube URL Parsing
+      var parsedUrl = parseYouTubeUrl(url);
+      var contentType = resolveContentType(rawType, parsedUrl.contentType);
+      var videoId = parsedUrl.videoId;
+      var playlistId = parsedUrl.playlistId;
 
-      // 4. Resolve Title
+      // 2. Resolve Thumbnail (Drive CDN or standard YouTube thumbnail)
+      var customDriveThumb = resolveGoogleDriveThumbnail(rawThumbnail);
+      var fallbackThumb = '';
+      if (videoId) {
+        fallbackThumb = 'https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg';
+      }
+
+      var finalThumbnail = customDriveThumb || fallbackThumb;
+      if (!finalThumbnail && contentType === 'playlist' && playlistId) {
+        // Query YouTube oEmbed for playlist thumbnail fallback
+        try {
+          var oUrl = 'https://www.youtube.com/oembed?url=' + encodeURIComponent('https://www.youtube.com/playlist?list=' + playlistId) + '&format=json';
+          var oRes = UrlFetchApp.fetch(oUrl, { muteHttpExceptions: true });
+          if (oRes.getResponseCode() === 200) {
+            var oData = JSON.parse(oRes.getContentText());
+            if (oData && oData.thumbnail_url) {
+              fallbackThumb = oData.thumbnail_url;
+              finalThumbnail = fallbackThumb;
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 3. Resolve Title
       var title = rawTitle ? String(rawTitle).trim() : '';
       if (!title) {
         if (description && String(description).trim().length > 0) {
@@ -93,7 +125,7 @@ function doGet(e) {
         }
       }
 
-      // 5. Check Published Status (default true unless explicitly marked FALSE/0/NO)
+      // 4. Check Published Status (default true unless explicitly marked FALSE/0/NO/DRAFT)
       var isPublished = true;
       if (rawPublished !== undefined && rawPublished !== null && String(rawPublished).trim() !== '') {
         var pubStr = String(rawPublished).trim().toLowerCase();
@@ -102,7 +134,7 @@ function doGet(e) {
         }
       }
 
-      // 6. Check Featured Status
+      // 5. Check Featured Status
       var isFeatured = false;
       if (rawFeatured !== undefined && rawFeatured !== null && String(rawFeatured).trim() !== '') {
         var featStr = String(rawFeatured).trim().toLowerCase();
@@ -111,10 +143,10 @@ function doGet(e) {
         }
       }
 
-      // 7. Category
+      // 6. Category
       var category = rawCategory ? String(rawCategory).trim() : 'Programming';
 
-      // 8. Display Order
+      // 7. Display Order
       var displayOrder = parseInt(rawOrder, 10);
       if (isNaN(displayOrder)) {
         displayOrder = r;
@@ -123,13 +155,15 @@ function doGet(e) {
       var item = {
         id: 'yt_' + (videoId || playlistId || r),
         contentType: contentType,
-        youtubeUrl: url,
+        youtubeUrl: parsedUrl.externalUrl || url,
         youtubeId: videoId || playlistId || '',
         playlistId: playlistId || undefined,
         title: title,
         description: description ? String(description).trim() : '',
         category: category,
-        thumbnailUrl: thumbnailUrl,
+        thumbnailUrl: finalThumbnail,
+        customThumbnailUrl: customDriveThumb || undefined,
+        fallbackThumbnailUrl: fallbackThumb || undefined,
         isFeatured: isFeatured,
         isPublished: isPublished,
         displayOrder: displayOrder,
@@ -186,7 +220,6 @@ function getTargetSheet() {
 
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
-    // Fall back to first sheet if Sheet1 not explicitly named
     var sheets = ss.getSheets();
     if (sheets.length > 0) {
       sheet = sheets[0];
@@ -198,16 +231,16 @@ function getTargetSheet() {
 }
 
 /**
- * Map header columns dynamically by inspecting header strings
+ * Map header columns dynamically with strict priority ordering
  */
 function mapHeaders(headerRow) {
   var map = {
     date: -1,
     url: -1,
     description: -1,
+    thumbnail: -1,
     title: -1,
     type: -1,
-    thumbnail: -1,
     category: -1,
     published: -1,
     featured: -1,
@@ -215,31 +248,40 @@ function mapHeaders(headerRow) {
   };
 
   for (var i = 0; i < headerRow.length; i++) {
-    var h = String(headerRow[i] || '').trim().toLowerCase();
+    var h = String(headerRow[i] || '').toLowerCase().replace(/\s+/g, ' ').trim();
 
-    if (h.indexOf('date') !== -1 || h.indexOf('upload') !== -1) {
-      map.date = i;
+    // Check THUMBNAIL first to prevent "thumbnail drive link" from matching URL!
+    if (
+      h.indexOf('thumb') !== -1 ||
+      h.indexOf('drive link') !== -1 ||
+      h.indexOf('poster') !== -1 ||
+      h === 'image' ||
+      h.indexOf('thumbnail drive link') !== -1
+    ) {
+      map.thumbnail = i;
     } else if (
-      h.indexOf('link') !== -1 ||
-      h.indexOf('url') !== -1 ||
       h.indexOf('youtube') !== -1 ||
-      h.indexOf('shorts') !== -1 ||
-      h.indexOf('playlist') !== -1
+      h.indexOf('video link') !== -1 ||
+      h.indexOf('playlist link') !== -1 ||
+      h.indexOf('shorts link') !== -1 ||
+      h.indexOf('link of youtube') !== -1 ||
+      h === 'link' ||
+      h === 'url'
     ) {
       map.url = i;
+    } else if (h.indexOf('date') !== -1 || h.indexOf('upload') !== -1) {
+      map.date = i;
     } else if (h.indexOf('desc') !== -1) {
       map.description = i;
-    } else if (h.indexOf('title') !== -1 || h.indexOf('name') !== -1) {
+    } else if (h === 'title' || h.indexOf('title') !== -1 || h === 'name') {
       map.title = i;
     } else if (h === 'type' || h.indexOf('content type') !== -1) {
       map.type = i;
-    } else if (h.indexOf('thumb') !== -1 || h.indexOf('poster') !== -1 || h.indexOf('image') !== -1) {
-      map.thumbnail = i;
     } else if (h.indexOf('cat') !== -1 || h.indexOf('tag') !== -1) {
       map.category = i;
     } else if (h.indexOf('pub') !== -1 || h.indexOf('visible') !== -1 || h.indexOf('status') !== -1) {
       map.published = i;
-    } else if (h.indexOf('feat') !== -1 || h.indexOf('highlight') !== -1 || h.indexOf('star') !== -1) {
+    } else if (h.indexOf('feat') !== -1 || h.indexOf('star') !== -1 || h.indexOf('highlight') !== -1) {
       map.featured = i;
     } else if (h.indexOf('order') !== -1 || h.indexOf('index') !== -1 || h.indexOf('sno') !== -1) {
       map.order = i;
@@ -250,6 +292,7 @@ function mapHeaders(headerRow) {
   if (map.date === -1 && headerRow.length > 0) map.date = 0;
   if (map.url === -1 && headerRow.length > 1) map.url = 1;
   if (map.description === -1 && headerRow.length > 2) map.description = 2;
+  if (map.thumbnail === -1 && headerRow.length > 3) map.thumbnail = 3;
 
   return map;
 }
@@ -262,88 +305,97 @@ function getVal(row, colIndex) {
 }
 
 /**
- * Resolves content type: 'video', 'short', or 'playlist'
+ * Robust Central YouTube URL Parser in Apps Script
  */
-function resolveContentType(rawType, url) {
+function parseYouTubeUrl(url) {
+  var str = String(url || '').trim();
+  var contentType = 'video';
+  var videoId = null;
+  var playlistId = null;
+
+  var pMatch = str.match(/[?&]list=([a-zA-Z0-9_-]+)/i) || str.match(/\/playlist\/([a-zA-Z0-9_-]+)/i);
+  if (pMatch) {
+    playlistId = pMatch[1];
+    contentType = 'playlist';
+  }
+
+  var sMatch = str.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i);
+  if (sMatch) {
+    videoId = sMatch[1];
+    contentType = 'short';
+  }
+
+  if (!videoId) {
+    var vMatch = str.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+    if (vMatch) {
+      videoId = vMatch[1];
+      if (!pMatch) contentType = 'video';
+    }
+  }
+
+  if (!videoId && !playlistId) {
+    if (/^[a-zA-Z0-9_-]{11}$/.test(str)) {
+      videoId = str;
+    } else if (/^(?:PL|UU|LL|FL|RD|OLAK5uy_)[a-zA-Z0-9_-]+$/.test(str)) {
+      playlistId = str;
+      contentType = 'playlist';
+    }
+  }
+
+  var externalUrl = str;
+  if (str.indexOf('http://') !== 0 && str.indexOf('https://') !== 0) {
+    if (contentType === 'playlist' && playlistId) {
+      externalUrl = 'https://www.youtube.com/playlist?list=' + playlistId;
+    } else if (contentType === 'short' && videoId) {
+      externalUrl = 'https://www.youtube.com/shorts/' + videoId;
+    } else if (videoId) {
+      externalUrl = 'https://www.youtube.com/watch?v=' + videoId;
+    }
+  }
+
+  return {
+    contentType: contentType,
+    videoId: videoId,
+    playlistId: playlistId,
+    externalUrl: externalUrl,
+  };
+}
+
+function resolveContentType(rawType, parsedType) {
   if (rawType && String(rawType).trim() !== '') {
     var t = String(rawType).trim().toLowerCase();
     if (t.indexOf('short') !== -1) return 'short';
     if (t.indexOf('play') !== -1 || t.indexOf('series') !== -1) return 'playlist';
     if (t.indexOf('vid') !== -1) return 'video';
   }
-
-  // Automatic URL pattern inference
-  var lower = String(url || '').toLowerCase();
-  if (lower.indexOf('/shorts/') !== -1) {
-    return 'short';
-  }
-  if (
-    lower.indexOf('list=') !== -1 ||
-    lower.indexOf('/playlist') !== -1 ||
-    lower.indexOf('videoseries') !== -1
-  ) {
-    return 'playlist';
-  }
-
-  return 'video';
+  return parsedType || 'video';
 }
 
 /**
- * Extract YouTube 11-char video ID
+ * Resolve Google Drive Thumbnail URL
  */
-function extractYouTubeId(url) {
-  if (!url) return null;
-  var str = String(url).trim();
-  if (/^[a-zA-Z0-9_-]{11}$/.test(str)) {
+function resolveGoogleDriveThumbnail(rawThumbnail) {
+  if (!rawThumbnail || String(rawThumbnail).trim() === '') return null;
+  var str = String(rawThumbnail).trim();
+
+  var driveMatch =
+    str.match(/(?:id=|\/d\/|\/file\/d\/)([a-zA-Z0-9_-]{20,})/i) ||
+    str.match(/google\.com\/.*?[\?&]id=([a-zA-Z0-9_-]{20,})/i) ||
+    str.match(/googleusercontent\.com\/d\/([a-zA-Z0-9_-]{20,})/i);
+
+  if (driveMatch && driveMatch[1]) {
+    return 'https://drive.google.com/thumbnail?id=' + driveMatch[1] + '&sz=w1280';
+  }
+
+  if (/^[a-zA-Z0-9_-]{25,}$/.test(str)) {
+    return 'https://drive.google.com/thumbnail?id=' + str + '&sz=w1280';
+  }
+
+  if (str.indexOf('http://') === 0 || str.indexOf('https://') === 0) {
     return str;
   }
-  var match = str.match(
-    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i
-  );
-  return match ? match[1] : null;
-}
 
-/**
- * Extract YouTube playlist ID
- */
-function extractPlaylistId(url) {
-  if (!url) return null;
-  var str = String(url).trim();
-  var listMatch = str.match(/[?&]list=([a-zA-Z0-9_-]+)/i);
-  if (listMatch) return listMatch[1];
-  var pathMatch = str.match(/\/playlist\/([a-zA-Z0-9_-]+)/i);
-  if (pathMatch) return pathMatch[1];
-  if (/^(?:PL|UU|LL|FL|RD|OLAK5uy_)[a-zA-Z0-9_-]+$/.test(str)) return str;
   return null;
-}
-
-/**
- * Resolve Thumbnail URL: converts Google Drive links or returns YouTube thumbnail
- */
-function resolveThumbnailUrl(rawThumbnail, videoId, contentType) {
-  if (rawThumbnail && String(rawThumbnail).trim() !== '') {
-    var thumbStr = String(rawThumbnail).trim();
-    // Convert Google Drive share link to Google Drive CDN URL
-    var driveMatch = thumbStr.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]{20,})/);
-    if (driveMatch) {
-      return 'https://lh3.googleusercontent.com/d/' + driveMatch[1];
-    }
-    if (thumbStr.indexOf('http') === 0) {
-      return thumbStr;
-    }
-  }
-
-  // Fallback based on video ID
-  if (videoId) {
-    return 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg';
-  }
-
-  // Playlist fallback
-  if (contentType === 'playlist') {
-    return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
-  }
-
-  return '';
 }
 
 /**

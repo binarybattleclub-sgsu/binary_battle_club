@@ -1,5 +1,17 @@
 export type YouTubeContentType = 'video' | 'short' | 'playlist';
 
+export interface ParsedYouTubeData {
+  originalUrl: string;
+  normalizedUrl: string;
+  contentType: YouTubeContentType;
+  videoId: string | null;
+  playlistId: string | null;
+  embedUrl: string | null;
+  externalUrl: string | null;
+  thumbnailFallbackUrl: string | null;
+  isValid: boolean;
+}
+
 export interface YouTubeVideo {
   id: string;
   contentType: YouTubeContentType;
@@ -11,9 +23,11 @@ export interface YouTubeVideo {
   category: string;
   thumbnailUrl: string;
   customThumbnailUrl?: string;
+  fallbackThumbnailUrl?: string;
   isFeatured: boolean;
   isPublished: boolean;
   displayOrder?: number;
+  parsedUrl?: ParsedYouTubeData;
   createdAt: string;
   updatedAt: string;
 }

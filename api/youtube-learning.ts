@@ -11,6 +11,7 @@ export interface YouTubeItem {
   category: string;
   thumbnailUrl: string;
   customThumbnailUrl?: string;
+  fallbackThumbnailUrl?: string;
   isFeatured: boolean;
   isPublished: boolean;
   displayOrder: number;
@@ -28,87 +29,129 @@ const SPREADSHEET_ID =
 const SHEET_TAB = process.env.YOUTUBE_SHEET_TAB || 'Sheet1';
 
 /**
- * Detect content type from URL:
- * - /shorts/ -> 'short'
- * - list= or /playlist/ -> 'playlist'
- * - default -> 'video'
+ * Robust Central YouTube URL Parser
  */
-function detectContentType(url: string, explicitType?: string): 'video' | 'short' | 'playlist' {
-  if (explicitType && explicitType.trim() !== '') {
-    const t = explicitType.trim().toLowerCase();
-    if (t.includes('short')) return 'short';
-    if (t.includes('play') || t.includes('series')) return 'playlist';
-    if (t.includes('vid')) return 'video';
+function parseYouTubeUrl(url: string) {
+  if (!url || typeof url !== 'string') {
+    return {
+      contentType: 'video' as const,
+      videoId: null,
+      playlistId: null,
+      embedUrl: null,
+      externalUrl: null,
+      isValid: false,
+    };
   }
 
-  const trimmed = (url || '').trim().toLowerCase();
-  if (trimmed.includes('/shorts/')) return 'short';
-  if (
-    trimmed.includes('list=') ||
-    trimmed.includes('/playlist') ||
-    trimmed.includes('videoseries')
-  ) {
-    return 'playlist';
+  const trimmed = url.trim();
+  let contentType: 'video' | 'short' | 'playlist' = 'video';
+  let videoId: string | null = null;
+  let playlistId: string | null = null;
+
+  // 1. Check for playlist (list= parameter or /playlist/ path)
+  const playlistMatch =
+    trimmed.match(/[?&]list=([a-zA-Z0-9_-]+)/i) ||
+    trimmed.match(/\/playlist\/([a-zA-Z0-9_-]+)/i);
+
+  if (playlistMatch) {
+    playlistId = playlistMatch[1];
+    contentType = 'playlist';
   }
-  return 'video';
+
+  // 2. Check for Shorts (/shorts/VIDEO_ID)
+  const shortsMatch = trimmed.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i);
+  if (shortsMatch) {
+    videoId = shortsMatch[1];
+    contentType = 'short';
+  }
+
+  // 3. Check for standard YouTube video or youtu.be or embed
+  if (!videoId) {
+    const videoMatch = trimmed.match(
+      /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i
+    );
+    if (videoMatch) {
+      videoId = videoMatch[1];
+      if (!playlistMatch) {
+        contentType = 'video';
+      }
+    }
+  }
+
+  // Standalone IDs
+  if (!videoId && !playlistId) {
+    if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+      videoId = trimmed;
+      contentType = 'video';
+    } else if (/^(?:PL|UU|LL|FL|RD|OLAK5uy_)[a-zA-Z0-9_-]+$/.test(trimmed)) {
+      playlistId = trimmed;
+      contentType = 'playlist';
+    }
+  }
+
+  const isValid = Boolean(videoId || playlistId);
+
+  let embedUrl: string | null = null;
+  if (contentType === 'playlist' && playlistId) {
+    if (videoId) {
+      embedUrl = `https://www.youtube.com/embed/${videoId}?list=${playlistId}&autoplay=1`;
+    } else {
+      embedUrl = `https://www.youtube.com/embed/videoseries?list=${playlistId}&autoplay=1`;
+    }
+  } else if (videoId) {
+    embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+  }
+
+  let externalUrl: string | null = null;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    externalUrl = trimmed;
+  } else if (contentType === 'playlist' && playlistId) {
+    externalUrl = `https://www.youtube.com/playlist?list=${playlistId}`;
+  } else if (contentType === 'short' && videoId) {
+    externalUrl = `https://www.youtube.com/shorts/${videoId}`;
+  } else if (videoId) {
+    externalUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  }
+
+  return {
+    contentType,
+    videoId,
+    playlistId,
+    embedUrl,
+    externalUrl,
+    isValid,
+  };
 }
 
 /**
- * Extract YouTube 11-char video ID
+ * Extract Google Drive file ID and convert to reliable browser-displayable URL
  */
-function extractVideoId(url: string): string | null {
-  if (!url) return null;
-  const trimmed = url.trim();
-  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
-  const match = trimmed.match(
-    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i
-  );
-  return match ? match[1] : null;
-}
+function resolveGoogleDriveThumbnail(rawUrlOrId: string | undefined): string | null {
+  if (!rawUrlOrId || typeof rawUrlOrId !== 'string') return null;
+  const trimmed = rawUrlOrId.trim();
 
-/**
- * Extract YouTube playlist ID
- */
-function extractPlaylistId(url: string): string | null {
-  if (!url) return null;
-  const trimmed = url.trim();
-  const listMatch = trimmed.match(/[?&]list=([a-zA-Z0-9_-]+)/i);
-  if (listMatch) return listMatch[1];
-  const pathMatch = trimmed.match(/\/playlist\/([a-zA-Z0-9_-]+)/i);
-  if (pathMatch) return pathMatch[1];
-  if (/^(?:PL|UU|LL|FL|RD|OLAK5uy_)[a-zA-Z0-9_-]+$/.test(trimmed)) return trimmed;
+  // 1. Match common Drive sharing link formats
+  const driveMatch =
+    trimmed.match(/(?:id=|\/d\/|\/file\/d\/)([a-zA-Z0-9_-]{20,})/i) ||
+    trimmed.match(/google\.com\/.*?[\?&]id=([a-zA-Z0-9_-]{20,})/i) ||
+    trimmed.match(/googleusercontent\.com\/d\/([a-zA-Z0-9_-]{20,})/i);
+
+  if (driveMatch && driveMatch[1]) {
+    const fileId = driveMatch[1];
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1280`;
+  }
+
+  // 2. Direct 25+ char alphanumeric ID
+  if (/^[a-zA-Z0-9_-]{25,}$/.test(trimmed)) {
+    return `https://drive.google.com/thumbnail?id=${trimmed}&sz=w1280`;
+  }
+
+  // 3. Direct HTTP(S) URL
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
   return null;
-}
-
-/**
- * Resolve Thumbnail URL:
- * - If Google Drive share link, converts to fast Google Drive CDN url (lh3.googleusercontent.com/d/ID)
- * - If empty, generates standard YouTube thumbnail
- */
-function resolveThumbnail(rawThumbnail: string, videoId: string | null, contentType: 'video' | 'short' | 'playlist'): string {
-  if (rawThumbnail && rawThumbnail.trim() !== '') {
-    const trimmed = rawThumbnail.trim();
-    // Convert Google Drive share link to Google Drive CDN
-    const driveMatch = trimmed.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]{20,})/);
-    if (driveMatch) {
-      return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
-    }
-    if (trimmed.startsWith('http')) {
-      return trimmed;
-    }
-  }
-
-  // YouTube standard thumbnail
-  if (videoId) {
-    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-  }
-
-  // Playlist fallback image
-  if (contentType === 'playlist') {
-    return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
-  }
-
-  return '';
 }
 
 /**
@@ -190,7 +233,7 @@ export default async function handler(req: any, res: any) {
 
       if (scriptRes.ok) {
         const json = await scriptRes.json();
-        if (json && Array.isArray(json.data)) {
+        if (json && Array.isArray(json.data) && json.data.length > 0) {
           cachedLearningData = { data: json.data, timestamp: now };
           return res.status(200).json({
             success: true,
@@ -223,7 +266,6 @@ export default async function handler(req: any, res: any) {
     const rows = parseCSV(csvText);
 
     if (rows.length <= 1) {
-      // Empty or header-only sheet
       cachedLearningData = { data: [], timestamp: now };
       return res.status(200).json({
         success: true,
@@ -233,64 +275,80 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const headers = rows[0].map((h) => h.toLowerCase().trim());
-
-    // Map column indices dynamically
+    const rawHeaders = rows[0];
     let colDate = -1;
     let colUrl = -1;
     let colDesc = -1;
+    let colThumbnail = -1;
     let colTitle = -1;
     let colType = -1;
-    let colThumbnail = -1;
     let colCategory = -1;
     let colPublished = -1;
     let colFeatured = -1;
     let colOrder = -1;
 
-    for (let i = 0; i < headers.length; i++) {
-      const h = headers[i];
-      if (h.includes('date') || h.includes('upload')) colDate = i;
-      else if (
-        h.includes('link') ||
-        h.includes('url') ||
-        h.includes('youtube') ||
-        h.includes('shorts') ||
-        h.includes('playlist')
-      )
-        colUrl = i;
-      else if (h.includes('desc')) colDesc = i;
-      else if (h.includes('title') || h.includes('name')) colTitle = i;
-      else if (h === 'type' || h.includes('content type')) colType = i;
-      else if (h.includes('thumb') || h.includes('poster') || h.includes('image'))
+    // Strict unambiguous header matching
+    for (let i = 0; i < rawHeaders.length; i++) {
+      const h = rawHeaders[i].toLowerCase().replace(/\s+/g, ' ').trim();
+
+      // Check THUMBNAIL first to prevent "THUMBNAIL DRIVE LINK" matching URL!
+      if (
+        h.includes('thumb') ||
+        h.includes('drive link') ||
+        h.includes('poster') ||
+        h === 'image' ||
+        h.includes('thumbnail drive link')
+      ) {
         colThumbnail = i;
-      else if (h.includes('cat') || h.includes('tag')) colCategory = i;
-      else if (h.includes('pub') || h.includes('visible') || h.includes('status'))
+      } else if (
+        h.includes('youtube') ||
+        h.includes('video link') ||
+        h.includes('playlist link') ||
+        h.includes('shorts link') ||
+        h.includes('link of youtube') ||
+        h === 'link' ||
+        h === 'url'
+      ) {
+        colUrl = i;
+      } else if (h.includes('date') || h.includes('upload')) {
+        colDate = i;
+      } else if (h.includes('desc')) {
+        colDesc = i;
+      } else if (h === 'title' || h.includes('title') || h === 'name') {
+        colTitle = i;
+      } else if (h === 'type' || h.includes('content type')) {
+        colType = i;
+      } else if (h.includes('cat') || h.includes('tag')) {
+        colCategory = i;
+      } else if (h.includes('pub') || h.includes('visible') || h.includes('status')) {
         colPublished = i;
-      else if (h.includes('feat') || h.includes('star') || h.includes('highlight'))
+      } else if (h.includes('feat') || h.includes('star') || h.includes('highlight')) {
         colFeatured = i;
-      else if (h.includes('order') || h.includes('index') || h.includes('sno'))
+      } else if (h.includes('order') || h.includes('index') || h.includes('sno')) {
         colOrder = i;
+      }
     }
 
-    // Default positional mapping for current 3 headers
-    if (colDate === -1 && headers.length > 0) colDate = 0;
-    if (colUrl === -1 && headers.length > 1) colUrl = 1;
-    if (colDesc === -1 && headers.length > 2) colDesc = 2;
+    // Default positional fallbacks
+    if (colDate === -1 && rawHeaders.length > 0) colDate = 0;
+    if (colUrl === -1 && rawHeaders.length > 1) colUrl = 1;
+    if (colDesc === -1 && rawHeaders.length > 2) colDesc = 2;
+    if (colThumbnail === -1 && rawHeaders.length > 3) colThumbnail = 3;
 
     const items: YouTubeItem[] = [];
 
     for (let r = 1; r < rows.length; r++) {
       const row = rows[r];
-      const rawUrl = (row[colUrl] || '').replace(/^"|"$/g, '').trim();
+      const rawUrl = colUrl !== -1 ? (row[colUrl] || '').replace(/^"|"$/g, '').trim() : '';
 
       if (!rawUrl) continue;
 
       const dateStr = colDate !== -1 ? (row[colDate] || '').replace(/^"|"$/g, '').trim() : '';
       const descStr = colDesc !== -1 ? (row[colDesc] || '').replace(/^"|"$/g, '').trim() : '';
-      const titleStr = colTitle !== -1 ? (row[colTitle] || '').replace(/^"|"$/g, '').trim() : '';
-      const typeStr = colType !== -1 ? (row[colType] || '').replace(/^"|"$/g, '').trim() : '';
       const thumbStr =
         colThumbnail !== -1 ? (row[colThumbnail] || '').replace(/^"|"$/g, '').trim() : '';
+      const titleStr = colTitle !== -1 ? (row[colTitle] || '').replace(/^"|"$/g, '').trim() : '';
+      const typeStr = colType !== -1 ? (row[colType] || '').replace(/^"|"$/g, '').trim() : '';
       const catStr =
         colCategory !== -1 ? (row[colCategory] || '').replace(/^"|"$/g, '').trim() : '';
       const pubStr =
@@ -300,11 +358,20 @@ export default async function handler(req: any, res: any) {
       const orderStr =
         colOrder !== -1 ? (row[colOrder] || '').replace(/^"|"$/g, '').trim() : '';
 
-      const contentType = detectContentType(rawUrl, typeStr);
-      const videoId = extractVideoId(rawUrl);
-      const playlistId = extractPlaylistId(rawUrl);
+      // Central URL parsing
+      const parsed = parseYouTubeUrl(rawUrl);
+      const contentType = (typeStr.toLowerCase().includes('short')
+        ? 'short'
+        : typeStr.toLowerCase().includes('play')
+        ? 'playlist'
+        : typeStr.toLowerCase().includes('vid')
+        ? 'video'
+        : parsed.contentType) as 'video' | 'short' | 'playlist';
 
-      // Check published status (default true unless explicitly false/0/no)
+      const videoId = parsed.videoId;
+      const playlistId = parsed.playlistId;
+
+      // Published check (default true)
       let isPublished = true;
       if (pubStr) {
         const lowerPub = pubStr.toLowerCase();
@@ -313,7 +380,7 @@ export default async function handler(req: any, res: any) {
         }
       }
 
-      // Check featured status
+      // Featured check
       let isFeatured = false;
       if (featStr) {
         const lowerFeat = featStr.toLowerCase();
@@ -322,8 +389,33 @@ export default async function handler(req: any, res: any) {
         }
       }
 
-      // Resolve thumbnail
-      const thumbnailUrl = resolveThumbnail(thumbStr, videoId, contentType);
+      // 1. Primary Thumbnail: Google Drive link from spreadsheet
+      const customDriveThumb = resolveGoogleDriveThumbnail(thumbStr);
+
+      // 2. Secondary Fallback Thumbnail: YouTube standard thumbnail
+      let fallbackThumb = '';
+      if (videoId) {
+        fallbackThumb = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+      }
+
+      // If playlist has no videoId and no customDriveThumb, fetch oEmbed thumbnail asynchronously
+      if (!customDriveThumb && !fallbackThumb && contentType === 'playlist' && playlistId) {
+        try {
+          const oRes = await fetch(
+            `https://www.youtube.com/oembed?url=${encodeURIComponent(
+              `https://www.youtube.com/playlist?list=${playlistId}`
+            )}&format=json`
+          );
+          if (oRes.ok) {
+            const oJson = await oRes.json();
+            if (oJson.thumbnail_url) {
+              fallbackThumb = oJson.thumbnail_url;
+            }
+          }
+        } catch {}
+      }
+
+      const finalThumb = customDriveThumb || fallbackThumb || '';
 
       // Resolve title
       let title = titleStr;
@@ -345,13 +437,15 @@ export default async function handler(req: any, res: any) {
       items.push({
         id: `yt_${videoId || playlistId || r}`,
         contentType,
-        youtubeUrl: rawUrl,
+        youtubeUrl: parsed.externalUrl || rawUrl,
         youtubeId: videoId || playlistId || '',
         playlistId: playlistId || undefined,
         title,
         description: descStr,
         category: catStr || 'Programming',
-        thumbnailUrl,
+        thumbnailUrl: finalThumb,
+        customThumbnailUrl: customDriveThumb || undefined,
+        fallbackThumbnailUrl: fallbackThumb || undefined,
         isFeatured,
         isPublished,
         displayOrder,
