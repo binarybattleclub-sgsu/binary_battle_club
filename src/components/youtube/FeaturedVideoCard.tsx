@@ -3,8 +3,6 @@ import {
   Play,
   Star,
   ExternalLink,
-  Edit2,
-  Trash2,
   ListVideo,
   Flame,
   Film,
@@ -15,18 +13,12 @@ import { getYouTubeExternalUrl } from '../../services/youtubeService';
 
 interface FeaturedVideoCardProps {
   video: YouTubeVideo;
-  isAdmin: boolean;
   onPlay: (video: YouTubeVideo) => void;
-  onEdit?: (video: YouTubeVideo) => void;
-  onDelete?: (video: YouTubeVideo) => void;
 }
 
 export const FeaturedVideoCard: React.FC<FeaturedVideoCardProps> = ({
   video,
-  isAdmin,
   onPlay,
-  onEdit,
-  onDelete,
 }) => {
   const externalUrl = getYouTubeExternalUrl(video);
   const isPlaylist = video.contentType === 'playlist';
@@ -62,6 +54,12 @@ export const FeaturedVideoCard: React.FC<FeaturedVideoCardProps> = ({
               src={video.customThumbnailUrl || video.thumbnailUrl}
               alt={video.title}
               className="w-full h-full object-cover transition-transform duration-700 group-hover/thumb:scale-105"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.includes('hqdefault') && video.youtubeId) {
+                  target.src = `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`;
+                }
+              }}
             />
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#080D18]/90 via-[#080D18]/30 to-transparent pointer-events-none" />
@@ -138,26 +136,6 @@ export const FeaturedVideoCard: React.FC<FeaturedVideoCardProps> = ({
               <span>{isPlaylist ? 'Open Playlist' : 'YouTube'}</span>
               <ExternalLink size={14} />
             </a>
-
-            {/* Admin Edit / Delete Shortcuts */}
-            {isAdmin && (
-              <div className="flex items-center gap-2 ml-auto">
-                <button
-                  onClick={() => onEdit?.(video)}
-                  title="Edit featured content"
-                  className="p-2 rounded-xl bg-[#080D18] border border-[#243650] hover:border-[#38BDF8] text-[#9FB0C8] hover:text-[#38BDF8] transition-colors"
-                >
-                  <Edit2 size={14} />
-                </button>
-                <button
-                  onClick={() => onDelete?.(video)}
-                  title="Delete featured content"
-                  className="p-2 rounded-xl bg-[#080D18] border border-[#243650] hover:border-red-500 text-[#9FB0C8] hover:text-red-400 transition-colors"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

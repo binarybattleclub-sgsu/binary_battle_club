@@ -356,6 +356,265 @@ export default defineConfig(({ mode }) => {
               return;
             }
 
+            // Register for /api/youtube-learning
+            if (url === '/api/youtube-learning' || url.startsWith('/api/youtube-learning?')) {
+              try {
+                const appsScriptUrl =
+                  process.env.YOUTUBE_LEARNING_SCRIPT_URL ||
+                  env.YOUTUBE_LEARNING_SCRIPT_URL ||
+                  process.env.GOOGLE_APPS_SCRIPT_URL ||
+                  env.GOOGLE_APPS_SCRIPT_URL;
+
+                if (appsScriptUrl && appsScriptUrl.trim() !== '') {
+                  try {
+                    const sRes = await fetch(appsScriptUrl.trim(), {
+                      headers: { Accept: 'application/json' },
+                    });
+                    if (sRes.ok) {
+                      const sJson = await sRes.json();
+                      if (sJson && Array.isArray(sJson.data)) {
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(JSON.stringify(sJson));
+                        return;
+                      }
+                    }
+                  } catch (e) {
+                    // Fallback to gviz CSV
+                  }
+                }
+
+                const spreadsheetId =
+                  process.env.YOUTUBE_SPREADSHEET_ID ||
+                  env.YOUTUBE_SPREADSHEET_ID ||
+                  '1hXrejoZzSYGoWpzB5SrohZpixQrXke9A9qRbWtYBnZw';
+                const sheetTab =
+                  process.env.YOUTUBE_SHEET_TAB ||
+                  env.YOUTUBE_SHEET_TAB ||
+                  'Sheet1';
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(
+                  sheetTab
+                )}`;
+                const cRes = await fetch(csvUrl);
+                if (!cRes.ok) {
+                  res.statusCode = 502;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(
+                    JSON.stringify({
+                      success: false,
+                      error: 'Could not fetch YouTube Learning spreadsheet',
+                    })
+                  );
+                  return;
+                }
+
+                const csvText = await cRes.text();
+                const rawLines = csvText.split(/\r?\n/).filter((l) => l.trim() !== '');
+                const rows: string[][] = [];
+
+                for (const line of rawLines) {
+                  const cells: string[] = [];
+                  let cur = '';
+                  let inQuote = false;
+                  for (let j = 0; j < line.length; j++) {
+                    const c = line[j];
+                    if (c === '"') {
+                      if (inQuote && line[j + 1] === '"') {
+                        cur += '"';
+                        j++;
+                      } else {
+                        inQuote = !inQuote;
+                      }
+                    } else if (c === ',' && !inQuote) {
+                      cells.push(cur.trim());
+                      cur = '';
+                    } else {
+                      cur += c;
+                    }
+                  }
+                  cells.push(cur.trim());
+                  rows.push(cells);
+                }
+
+                if (rows.length <= 1) {
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(
+                    JSON.stringify({
+                      success: true,
+                      count: 0,
+                      data: [],
+                      source: 'Google Sheets (Empty)',
+                    })
+                  );
+                  return;
+                }
+
+                const headers = rows[0].map((h) => h.toLowerCase().trim());
+                let colDate = -1;
+                let colUrl = -1;
+                let colDesc = -1;
+                let colTitle = -1;
+                let colType = -1;
+                let colThumbnail = -1;
+                let colCategory = -1;
+                let colPublished = -1;
+                let colFeatured = -1;
+                let colOrder = -1;
+
+                for (let i = 0; i < headers.length; i++) {
+                  const h = headers[i];
+                  if (h.includes('date') || h.includes('upload')) colDate = i;
+                  else if (
+                    h.includes('link') ||
+                    h.includes('url') ||
+                    h.includes('youtube') ||
+                    h.includes('shorts') ||
+                    h.includes('playlist')
+                  )
+                    colUrl = i;
+                  else if (h.includes('desc')) colDesc = i;
+                  else if (h.includes('title') || h.includes('name')) colTitle = i;
+                  else if (h === 'type' || h.includes('content type')) colType = i;
+                  else if (h.includes('thumb') || h.includes('poster') || h.includes('image'))
+                    colThumbnail = i;
+                  else if (h.includes('cat') || h.includes('tag')) colCategory = i;
+                  else if (h.includes('pub') || h.includes('visible') || h.includes('status'))
+                    colPublished = i;
+                  else if (h.includes('feat') || h.includes('star') || h.includes('highlight'))
+                    colFeatured = i;
+                  else if (h.includes('order') || h.includes('index') || h.includes('sno'))
+                    colOrder = i;
+                }
+
+                if (colDate === -1 && headers.length > 0) colDate = 0;
+                if (colUrl === -1 && headers.length > 1) colUrl = 1;
+                if (colDesc === -1 && headers.length > 2) colDesc = 2;
+
+                const items: any[] = [];
+
+                for (let r = 1; r < rows.length; r++) {
+                  const row = rows[r];
+                  const rawUrl = (row[colUrl] || '').replace(/^"|"$/g, '').trim();
+                  if (!rawUrl) continue;
+
+                  const dateStr = colDate !== -1 ? (row[colDate] || '').replace(/^"|"$/g, '').trim() : '';
+                  const descStr = colDesc !== -1 ? (row[colDesc] || '').replace(/^"|"$/g, '').trim() : '';
+                  const titleStr = colTitle !== -1 ? (row[colTitle] || '').replace(/^"|"$/g, '').trim() : '';
+                  const typeStr = colType !== -1 ? (row[colType] || '').replace(/^"|"$/g, '').trim() : '';
+                  const thumbStr = colThumbnail !== -1 ? (row[colThumbnail] || '').replace(/^"|"$/g, '').trim() : '';
+                  const catStr = colCategory !== -1 ? (row[colCategory] || '').replace(/^"|"$/g, '').trim() : '';
+                  const pubStr = colPublished !== -1 ? (row[colPublished] || '').replace(/^"|"$/g, '').trim() : '';
+                  const featStr = colFeatured !== -1 ? (row[colFeatured] || '').replace(/^"|"$/g, '').trim() : '';
+                  const orderStr = colOrder !== -1 ? (row[colOrder] || '').replace(/^"|"$/g, '').trim() : '';
+
+                  let contentType = 'video';
+                  if (typeStr) {
+                    const t = typeStr.toLowerCase();
+                    if (t.includes('short')) contentType = 'short';
+                    else if (t.includes('play') || t.includes('series')) contentType = 'playlist';
+                  } else {
+                    const l = rawUrl.toLowerCase();
+                    if (l.includes('/shorts/')) contentType = 'short';
+                    else if (l.includes('list=') || l.includes('/playlist') || l.includes('videoseries'))
+                      contentType = 'playlist';
+                  }
+
+                  let videoId = '';
+                  const vMatch = rawUrl.match(
+                    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i
+                  );
+                  if (vMatch) videoId = vMatch[1];
+                  else if (/^[a-zA-Z0-9_-]{11}$/.test(rawUrl)) videoId = rawUrl;
+
+                  let playlistId = '';
+                  const pMatch = rawUrl.match(/[?&]list=([a-zA-Z0-9_-]+)/i) || rawUrl.match(/\/playlist\/([a-zA-Z0-9_-]+)/i);
+                  if (pMatch) playlistId = pMatch[1];
+                  else if (/^(?:PL|UU|LL|FL|RD|OLAK5uy_)[a-zA-Z0-9_-]+$/.test(rawUrl)) playlistId = rawUrl;
+
+                  let thumbnailUrl = '';
+                  if (thumbStr) {
+                    const driveMatch = thumbStr.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]{20,})/);
+                    if (driveMatch) {
+                      thumbnailUrl = `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+                    } else if (thumbStr.startsWith('http')) {
+                      thumbnailUrl = thumbStr;
+                    }
+                  }
+                  if (!thumbnailUrl && videoId) {
+                    thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                  }
+                  if (!thumbnailUrl && contentType === 'playlist') {
+                    thumbnailUrl =
+                      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                  }
+
+                  let title = titleStr;
+                  if (!title) {
+                    if (descStr) {
+                      const firstLine = descStr.split('\n')[0].trim();
+                      title = firstLine.length > 60 ? firstLine.substring(0, 57) + '...' : firstLine;
+                    } else if (contentType === 'playlist') {
+                      title = `Curated Learning Playlist #${r}`;
+                    } else if (contentType === 'short') {
+                      title = `Quick Concept #${r}`;
+                    } else {
+                      title = `Technical Tutorial #${r}`;
+                    }
+                  }
+
+                  let isPublished = true;
+                  if (pubStr) {
+                    const lp = pubStr.toLowerCase();
+                    if (lp === 'false' || lp === '0' || lp === 'no' || lp === 'draft') isPublished = false;
+                  }
+
+                  let isFeatured = false;
+                  if (featStr) {
+                    const lf = featStr.toLowerCase();
+                    if (lf === 'true' || lf === '1' || lf === 'yes') isFeatured = true;
+                  }
+
+                  const displayOrder = parseInt(orderStr, 10) || r;
+
+                  items.push({
+                    id: `yt_${videoId || playlistId || r}`,
+                    contentType,
+                    youtubeUrl: rawUrl,
+                    youtubeId: videoId || playlistId || '',
+                    playlistId: playlistId || undefined,
+                    title,
+                    description: descStr,
+                    category: catStr || 'Programming',
+                    thumbnailUrl,
+                    isFeatured,
+                    isPublished,
+                    displayOrder,
+                    createdAt: dateStr || new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  });
+                }
+
+                items.sort((a, b) => {
+                  if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
+                  return a.displayOrder - b.displayOrder;
+                });
+
+                res.setHeader('Content-Type', 'application/json');
+                res.end(
+                  JSON.stringify({
+                    success: true,
+                    count: items.length,
+                    data: items,
+                    source: 'Google Sheets gviz (Local Dev)',
+                  })
+                );
+              } catch (e: any) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: false, error: e.message }));
+              }
+              return;
+            }
+
             next();
           });
         },

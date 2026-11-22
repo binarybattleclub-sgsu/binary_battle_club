@@ -13,6 +13,7 @@ export interface YouTubeVideo {
   customThumbnailUrl?: string;
   isFeatured: boolean;
   isPublished: boolean;
+  displayOrder?: number;
   createdAt: string;
   updatedAt: string;
 }

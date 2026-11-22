@@ -2,9 +2,6 @@ import React from 'react';
 import {
   Play,
   Star,
-  EyeOff,
-  Edit2,
-  Trash2,
   ExternalLink,
   Flame,
 } from 'lucide-react';
@@ -14,22 +11,12 @@ import { getYouTubeExternalUrl } from '../../services/youtubeService';
 
 interface ShortCardProps {
   shortItem: YouTubeVideo;
-  isAdmin: boolean;
   onPlay: (item: YouTubeVideo) => void;
-  onEdit?: (item: YouTubeVideo) => void;
-  onDelete?: (item: YouTubeVideo) => void;
-  onToggleFeatured?: (item: YouTubeVideo) => void;
-  onTogglePublish?: (item: YouTubeVideo) => void;
 }
 
 export const ShortCard: React.FC<ShortCardProps> = ({
   shortItem,
-  isAdmin,
   onPlay,
-  onEdit,
-  onDelete,
-  onToggleFeatured,
-  onTogglePublish,
 }) => {
   const externalUrl = getYouTubeExternalUrl(shortItem);
 
@@ -47,7 +34,7 @@ export const ShortCard: React.FC<ShortCardProps> = ({
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           onError={(e) => {
             const target = e.currentTarget;
-            if (!target.src.includes('hqdefault')) {
+            if (!target.src.includes('hqdefault') && shortItem.youtubeId) {
               target.src = `https://img.youtube.com/vi/${shortItem.youtubeId}/hqdefault.jpg`;
             }
           }}
@@ -58,7 +45,7 @@ export const ShortCard: React.FC<ShortCardProps> = ({
 
         {/* Top Badges: Shorts badge & Category */}
         <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
-          {/* Subtle Shorts Label */}
+          {/* Shorts Label */}
           <div className="px-2.5 py-1 rounded-full bg-red-600/90 backdrop-blur-md text-white text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
             <Flame size={12} className="fill-white" />
             <span>Shorts</span>
@@ -79,14 +66,6 @@ export const ShortCard: React.FC<ShortCardProps> = ({
             <Play size={20} className="ml-1 fill-white" />
           </div>
         </div>
-
-        {/* Unpublished indicator */}
-        {!shortItem.isPublished && (
-          <div className="absolute top-12 left-3 px-2 py-0.5 rounded-md bg-amber-950/90 border border-amber-500/50 text-[10px] font-mono text-amber-300 flex items-center gap-1 shadow">
-            <EyeOff size={11} />
-            <span>DRAFT</span>
-          </div>
-        )}
 
         {/* Bottom Content within the portrait preview */}
         <div className="absolute bottom-0 inset-x-0 p-4 space-y-1.5 pointer-events-auto">
@@ -122,54 +101,6 @@ export const ShortCard: React.FC<ShortCardProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Admin Action Bar (if admin authenticated) */}
-      {isAdmin && (
-        <div className="p-2.5 bg-[#080D18]/90 border-t border-[#243650] flex items-center justify-between text-xs text-[#9FB0C8]">
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => onToggleFeatured?.(shortItem)}
-              title={shortItem.isFeatured ? 'Unmark featured' : 'Mark as featured'}
-              className={`p-1.5 rounded-lg border transition-colors ${
-                shortItem.isFeatured
-                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
-                  : 'bg-[#101D35] border-[#243650] hover:text-[#38BDF8]'
-              }`}
-            >
-              <Star size={13} className={shortItem.isFeatured ? 'fill-amber-300' : ''} />
-            </button>
-
-            <button
-              onClick={() => onTogglePublish?.(shortItem)}
-              title={shortItem.isPublished ? 'Unpublish (make draft)' : 'Publish (make visible)'}
-              className={`p-1.5 rounded-lg border transition-colors ${
-                shortItem.isPublished
-                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
-                  : 'bg-amber-500/10 border-amber-500/40 text-amber-300'
-              }`}
-            >
-              <EyeOff size={13} />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => onEdit?.(shortItem)}
-              title="Edit Short"
-              className="p-1.5 rounded-lg bg-[#101D35] hover:bg-[#172945] border border-[#243650] hover:border-[#38BDF8] text-[#9FB0C8] hover:text-[#38BDF8] transition-colors"
-            >
-              <Edit2 size={13} />
-            </button>
-            <button
-              onClick={() => onDelete?.(shortItem)}
-              title="Delete Short"
-              className="p-1.5 rounded-lg bg-[#101D35] hover:bg-red-950/40 border border-[#243650] hover:border-red-500 text-[#9FB0C8] hover:text-red-400 transition-colors"
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

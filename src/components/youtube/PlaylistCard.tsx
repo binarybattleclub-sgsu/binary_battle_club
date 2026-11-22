@@ -3,9 +3,6 @@ import {
   ListVideo,
   Play,
   Star,
-  EyeOff,
-  Edit2,
-  Trash2,
   ExternalLink,
   Layers,
 } from 'lucide-react';
@@ -15,22 +12,12 @@ import { getYouTubeExternalUrl } from '../../services/youtubeService';
 
 interface PlaylistCardProps {
   playlistItem: YouTubeVideo;
-  isAdmin: boolean;
   onPlay: (item: YouTubeVideo) => void;
-  onEdit?: (item: YouTubeVideo) => void;
-  onDelete?: (item: YouTubeVideo) => void;
-  onToggleFeatured?: (item: YouTubeVideo) => void;
-  onTogglePublish?: (item: YouTubeVideo) => void;
 }
 
 export const PlaylistCard: React.FC<PlaylistCardProps> = ({
   playlistItem,
-  isAdmin,
   onPlay,
-  onEdit,
-  onDelete,
-  onToggleFeatured,
-  onTogglePublish,
 }) => {
   const externalUrl = getYouTubeExternalUrl(playlistItem);
 
@@ -91,14 +78,6 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
               <Play size={20} className="ml-1 fill-white" />
             </div>
           </div>
-
-          {/* Unpublished Draft Indicator */}
-          {!playlistItem.isPublished && (
-            <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-amber-950/80 border border-amber-500/40 text-[10px] font-mono text-amber-300 flex items-center gap-1">
-              <EyeOff size={11} />
-              <span>DRAFT</span>
-            </div>
-          )}
         </div>
 
         {/* Card Body */}
@@ -146,54 +125,6 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
             <ExternalLink size={11} />
           </a>
         </div>
-
-        {/* Admin Controls */}
-        {isAdmin && (
-          <div className="pt-2 border-t border-[#243650] flex items-center justify-between text-xs text-[#9FB0C8]">
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => onToggleFeatured?.(playlistItem)}
-                title={playlistItem.isFeatured ? 'Unmark featured' : 'Mark as featured'}
-                className={`p-1.5 rounded-lg border transition-colors ${
-                  playlistItem.isFeatured
-                    ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
-                    : 'bg-[#080D18] border-[#243650] hover:text-[#38BDF8]'
-                }`}
-              >
-                <Star size={13} className={playlistItem.isFeatured ? 'fill-amber-300' : ''} />
-              </button>
-
-              <button
-                onClick={() => onTogglePublish?.(playlistItem)}
-                title={playlistItem.isPublished ? 'Unpublish (make draft)' : 'Publish (make visible)'}
-                className={`p-1.5 rounded-lg border transition-colors ${
-                  playlistItem.isPublished
-                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
-                    : 'bg-amber-500/10 border-amber-500/40 text-amber-300'
-                }`}
-              >
-                <EyeOff size={13} />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => onEdit?.(playlistItem)}
-                title="Edit playlist"
-                className="p-1.5 rounded-lg bg-[#080D18] hover:bg-[#172945] border border-[#243650] hover:border-[#38BDF8] text-[#9FB0C8] hover:text-[#38BDF8] transition-colors"
-              >
-                <Edit2 size={13} />
-              </button>
-              <button
-                onClick={() => onDelete?.(playlistItem)}
-                title="Delete playlist"
-                className="p-1.5 rounded-lg bg-[#080D18] hover:bg-red-950/40 border border-[#243650] hover:border-red-500 text-[#9FB0C8] hover:text-red-400 transition-colors"
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
