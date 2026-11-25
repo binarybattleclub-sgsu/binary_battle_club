@@ -46,8 +46,8 @@ export const AppContent: React.FC = () => {
 
       {/* Main Content Area */}
       <div
-        className={`flex-1 min-w-0 flex flex-col transition-all duration-300 ease-in-out ${
-          collapsed ? 'lg:pl-20' : 'lg:pl-64'
+        className={`flex-1 min-w-0 flex flex-col transition-[padding] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          collapsed ? 'lg:pl-[114px]' : 'lg:pl-[296px]'
         }`}
       >
         {/* Top Header */}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Home,
@@ -10,8 +10,9 @@ import {
   Trophy,
   Users,
   UserPlus,
-  ChevronLeft,
-  ChevronRight,
+  ChevronsRight,
+  ChevronsLeft,
+  X,
 } from 'lucide-react';
 import { ASSETS } from '../data/assets';
 
@@ -41,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setMobileOpen,
 }) => {
   const location = useLocation();
+  const asideRef = useRef<HTMLElement>(null);
 
   const handleLinkClick = () => {
     if (mobileOpen) {
@@ -48,113 +50,244 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  // Close mobile drawer or collapse expanded desktop float on Escape or outside click
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (mobileOpen) setMobileOpen(false);
+        if (!collapsed) setCollapsed(true);
+      }
+    };
+
+    const handlePointerDown = (e: MouseEvent) => {
+      if (
+        !collapsed &&
+        asideRef.current &&
+        !asideRef.current.contains(e.target as Node) &&
+        window.innerWidth >= 1024
+      ) {
+        setCollapsed(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handlePointerDown);
+    };
+  }, [collapsed, mobileOpen, setCollapsed, setMobileOpen]);
+
+  const showLabels = !collapsed || mobileOpen;
+
   return (
     <>
       {/* Mobile Backdrop overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-[#080D18]/80 backdrop-blur-md z-40 lg:hidden transition-opacity"
+          className="fixed inset-0 bg-[#080D18]/80 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* Main Sidebar */}
+      {/* Floating Editorial Navigation Rail */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col bg-[#101D35] text-[#9FB0C8] border-r border-[#243650] transition-all duration-300 ease-in-out select-none
-          ${collapsed ? 'lg:w-20' : 'lg:w-64'}
-          ${mobileOpen ? 'translate-x-0 w-72' : '-translate-x-full lg:translate-x-0'}
+        ref={asideRef}
+        aria-label="Global Club Navigation"
+        className={`fixed top-0 bottom-0 left-0 lg:top-4 lg:bottom-4 lg:left-4 z-50 flex flex-col overflow-hidden
+          bg-[#101D35]/92 backdrop-blur-md text-[#9FB0C8]
+          border-r lg:border border-[#243650]
+          lg:rounded-2xl shadow-[0_22px_55px_-10px_rgba(4,7,15,0.9),0_0_0_1px_rgba(56,189,248,0.08)]
+          transition-[width,transform,box-shadow] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] select-none
+          ${collapsed ? 'lg:w-[82px]' : 'lg:w-[264px]'}
+          ${mobileOpen ? 'translate-x-0 w-72 rounded-r-2xl' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        {/* Top Branding Header */}
-        <div className="h-20 px-3.5 flex items-center justify-between border-b border-[#243650] bg-[#080D18]">
+        {/* Top Floating Rail Brand & Toggle Container */}
+        <div
+          className={`shrink-0 border-b border-[#243650]/80 bg-[#080D18]/60 lg:rounded-t-2xl transition-all duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            showLabels
+              ? 'h-20 px-4 flex flex-row items-center justify-between gap-2.5'
+              : 'py-3.5 px-2 flex flex-col items-center justify-center gap-2.5'
+          }`}
+        >
           <NavLink
             to="/"
             onClick={handleLinkClick}
-            className="flex items-center gap-3 overflow-hidden group focus:outline-none"
+            aria-label="Binary Battle Club Home"
+            className={`flex items-center min-w-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8] rounded-xl ${
+              showLabels ? 'gap-3 flex-1 overflow-hidden' : 'justify-center w-11 h-11 shrink-0'
+            }`}
           >
-            {/* Logo with technical Cyan/Electric-Blue gradient edge */}
-            <div className="relative flex items-center justify-center w-[48px] h-[48px] rounded-xl bg-gradient-to-br from-[#2563EB] to-[#38BDF8] p-[1.5px] shrink-0 shadow-[0_0_15px_rgba(37,99,235,0.25)] ring-1 ring-[#243650] group-hover:shadow-[0_0_20px_rgba(56,189,248,0.4)] group-hover:scale-105 transition-all duration-300">
+            {/* Unclipped Logo Emblem strictly bounded inside sidebar */}
+            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-[#080D18] border border-[#243650] group-hover:border-[#38BDF8]/70 shrink-0 transition-all duration-200 shadow-sm overflow-hidden">
               <img
                 src={ASSETS.brand.logo}
                 alt="Binary Battle Club Logo"
-                className="w-full h-full object-contain rounded-[10px] bg-[#080D18] p-1"
+                className="w-full h-full object-contain rounded-[10px] p-1"
               />
-              <span className="sr-only">Binary Battle Club</span>
             </div>
 
-            {/* Brand text */}
-            {(!collapsed || mobileOpen) && (
-              <div className="flex flex-col min-w-0 transition-opacity duration-200 pl-0.5 whitespace-nowrap">
-                <span className="text-[13.5px] font-black tracking-wider uppercase leading-tight text-[#DCE6F5] flex items-center gap-1">
-                  <span className="text-[#38BDF8] font-mono font-bold tracking-tight">{"{ }"}</span>
-                  <span className="truncate">BINARY BATTLE</span>
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[10.5px] font-bold tracking-[0.22em] text-[#38BDF8] uppercase">
-                    CLUB
+            {/* Complete Unclipped Brand Wordmark */}
+            {showLabels && (
+              <div className="flex flex-col min-w-0 leading-none animate-fade-in overflow-hidden">
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="font-mono text-[#38BDF8] text-xs font-semibold">{'//'}</span>
+                  <span className="font-sans font-bold text-sm tracking-[-0.01em] text-[#DCE6F5] uppercase">
+                    Binary Battle
                   </span>
-                  <span className="text-[10px] text-[#243650] font-bold">//</span>
-                  <span className="text-[10.5px] font-medium tracking-[0.2em] text-[#9FB0C8]">
-                    SGSU
+                </div>
+                <div className="flex items-center gap-2 mt-1 whitespace-nowrap">
+                  <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#38BDF8]">
+                    Club
                   </span>
+                  <span className="text-[9px] font-mono text-[#9FB0C8]/60">01</span>
                 </div>
               </div>
             )}
           </NavLink>
 
-          {/* Desktop collapse toggle button */}
+          {/* Desktop Toggle Button - Centered below logo when collapsed, right-aligned when expanded */}
           <button
             type="button"
             onClick={() => setCollapsed((prev) => !prev)}
-            className="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg text-[#9FB0C8] hover:text-[#DCE6F5] hover:bg-[#172945] border border-transparent hover:border-[#243650] transition-colors"
-            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-            aria-label={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={`hidden lg:flex items-center justify-center rounded-lg text-[#9FB0C8] hover:text-[#DCE6F5] bg-[#080D18]/85 hover:bg-[#172945] border border-[#243650] hover:border-[#38BDF8]/50 transition-all duration-200 cursor-pointer shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8] ${
+              collapsed ? 'w-10 h-7' : 'w-8 h-8'
+            }`}
           >
-            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            {collapsed ? <ChevronsRight size={15} /> : <ChevronsLeft size={15} />}
           </button>
+
+          {/* Mobile Close Button */}
+          {mobileOpen && (
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              className="lg:hidden p-2 rounded-lg text-[#9FB0C8] hover:text-[#DCE6F5] hover:bg-[#172945]"
+              aria-label="Close navigation"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
-        {/* Navigation Menu Links */}
-        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
-          {navItems.map((item) => {
+        {/* Navigation Links */}
+        <nav
+          className="flex-1 min-h-0 px-2.5 py-4 space-y-1.5 overflow-y-auto overflow-x-hidden"
+          aria-label="Primary Navigation"
+        >
+          {showLabels && (
+            <div className="px-2.5 pb-2 mb-1.5 flex items-center justify-between border-b border-[#243650]/70 whitespace-nowrap">
+              <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9FB0C8]/75">
+                Directory
+              </span>
+              <span className="text-[10px] font-mono text-[#38BDF8]/80">09</span>
+            </div>
+          )}
+
+          {navItems.map((item, idx) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const isActive =
+              item.path === '/'
+                ? location.pathname === '/'
+                : location.pathname === item.path ||
+                  (item.path === '/innovate-build' &&
+                    (location.pathname.startsWith('/innovate-build') ||
+                      location.pathname.startsWith('/create-showcase')));
+            const itemNum = String(idx + 1).padStart(2, '0');
 
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
                 onClick={handleLinkClick}
-                title={collapsed && !mobileOpen ? item.label : undefined}
-                className={`relative flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 group font-medium
+                title={!showLabels ? item.label : undefined}
+                aria-label={item.label}
+                className={`relative flex items-center rounded-xl transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8]
+                  ${
+                    showLabels
+                      ? 'w-full gap-3 px-3 py-2.5 justify-start'
+                      : 'w-11 h-10 mx-auto px-0 py-0 justify-center'
+                  }
                   ${
                     isActive
-                      ? 'bg-[#172945] text-[#DCE6F5] border-l-[3px] border-[#2563EB] shadow-[inset_0_0_15px_rgba(37,99,235,0.12)]'
-                      : 'text-[#9FB0C8] hover:text-[#DCE6F5] hover:bg-[#172945]/60 border-l-[3px] border-transparent'
+                      ? 'bg-[#172945] text-[#DCE6F5] font-semibold shadow-sm border border-[#2563EB]/40'
+                      : 'text-[#9FB0C8] hover:text-[#DCE6F5] hover:bg-[#172945]/65 font-medium border border-transparent'
                   }
-                  ${item.highlight && !isActive ? 'hover:text-[#38BDF8]' : ''}
+                  ${
+                    item.highlight && !isActive
+                      ? 'mt-2.5 border-[#2563EB]/40 bg-[#2563EB]/10 hover:bg-[#2563EB]/20 hover:border-[#38BDF8]/50 text-[#DCE6F5]'
+                      : ''
+                  }
                 `}
               >
-                <div
-                  className={`flex items-center justify-center shrink-0 transition-colors duration-200
-                    ${isActive ? 'text-[#38BDF8]' : 'text-[#9FB0C8] group-hover:text-[#DCE6F5]'}
-                  `}
-                >
-                  <Icon size={19} strokeWidth={isActive ? 2.2 : 1.8} />
-                </div>
-
-                {(!collapsed || mobileOpen) && (
-                  <span className="truncate flex-1 tracking-tight text-[13.5px]">{item.label}</span>
+                {/* Floating Active Marker Pill */}
+                {isActive && (
+                  <span
+                    className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-[#38BDF8] shadow-[0_0_10px_rgba(56,189,248,0.65)] transition-all duration-200"
+                    aria-hidden="true"
+                  />
                 )}
 
-                {isActive && (!collapsed || mobileOpen) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8] shadow-[0_0_6px_#38BDF8] shrink-0" />
+                <div
+                  className={`flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105
+                    ${
+                      isActive
+                        ? 'text-[#38BDF8]'
+                        : item.highlight
+                        ? 'text-[#38BDF8]'
+                        : 'text-[#9FB0C8] group-hover:text-[#DCE6F5]'
+                    }
+                  `}
+                >
+                  <Icon size={18} strokeWidth={isActive ? 2.2 : 1.8} />
+                </div>
+
+                {showLabels && (
+                  <div
+                    style={{ transitionDelay: `${idx * 22}ms` }}
+                    className="flex items-center justify-between flex-1 min-w-0 transition-all duration-200 overflow-hidden"
+                  >
+                    <span className="truncate text-[13.5px] tracking-[-0.01em] whitespace-nowrap">
+                      {item.label}
+                    </span>
+                    <span
+                      className={`font-mono text-[10px] tracking-wider ml-2 shrink-0 transition-colors ${
+                        isActive ? 'text-[#38BDF8]' : 'text-[#9FB0C8]/45 group-hover:text-[#9FB0C8]'
+                      }`}
+                    >
+                      {itemNum}
+                    </span>
+                  </div>
                 )}
               </NavLink>
             );
           })}
         </nav>
+
+        {/* Bottom Editorial Colophon Metadata */}
+        <div
+          className={`shrink-0 border-t border-[#243650]/80 bg-[#080D18]/60 lg:rounded-b-2xl text-[10px] font-mono text-[#9FB0C8]/75 transition-all duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            showLabels
+              ? 'px-4 py-3.5 space-y-0.5'
+              : 'py-3 px-2 flex flex-col items-center justify-center'
+          }`}
+        >
+          {showLabels ? (
+            <>
+              <div className="flex items-center justify-between text-[#DCE6F5]/85 whitespace-nowrap">
+                <span>SGSU CHAPTER</span>
+                <span className="text-[#38BDF8]">2026</span>
+              </div>
+              <p className="truncate text-[#9FB0C8]/65">School of Future Skills &amp; IT</p>
+            </>
+          ) : (
+            <span className="text-[9px] text-[#38BDF8] font-bold tracking-widest">SGSU</span>
+          )}
+        </div>
       </aside>
     </>
   );
